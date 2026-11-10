@@ -1,0 +1,13 @@
+#separator \x09
+#set_separator	,
+#empty_field	(empty)
+#unset_field	-
+#path	notice
+#open	2026-11-10-09-14-22
+#fields	ts	uid	id.orig_h	id.orig_p	id.resp_h	id.resp_p	fuid	proto	note	msg	sub	src	dst	p	n	peer_descr	actions	suppress_for
+#types	time	string	addr	port	addr	port	string	enum	enum	string	string	addr	addr	port	count	string	set[enum]	interval
+1794302062.481	CHhAvVGS1DHFjwGM9	203.0.113.44	51234	10.10.4.21	80	-	tcp	Scan::Port_Scan	203.0.113.44 swept 1-1024/tcp on egov-portal	-	203.0.113.44	10.10.4.21	80	1024	zeek	Notice::ACTION_LOG	3600.000000
+1794302120.114	C4nGdY2aB7qL9xR1s	198.51.100.7	40222	10.10.4.21	22	-	tcp	SSH::Password_Guessing	198.51.100.7 failed 12 logins on egov-portal	-	198.51.100.7	10.10.4.21	22	12	zeek	Notice::ACTION_LOG	3600.000000
+1794302201.900	C9kPq3wE5rT7yU1iO	192.0.2.88	55501	10.10.4.21	443	-	tcp	HTTP::SQL_Injection_Victim	SQL injection payload in POST /login	-	192.0.2.88	10.10.4.21	443	1	zeek	Notice::ACTION_LOG	3600.000000
+1794302302.500	C2mNb4vC6xZ8aS3dF	203.0.113.44	60000	10.10.5.9	8080	-	-	Something::Unexpected	-	(empty)	-	-	8080	3	zeek	Notice::ACTION_LOG	3600.000000
+#close	2026-11-10-09-15-22

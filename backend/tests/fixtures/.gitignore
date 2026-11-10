@@ -1,0 +1,3 @@
+# Test fixtures keep their real-world file names (Zeek's notice.log, conn.log, eve.json, ...).
+# The repo root ignores *.log as runtime output; re-include logs that live under tests/fixtures/.
+!**/*.log
