@@ -86,6 +86,11 @@ make simulate     # stream fake attacks
 
 ---
 
+## Using AI agents
+
+This repo carries its own agent instructions. Point an agent at [`AGENTS.md`](AGENTS.md); for a
+first session, send it the role prompt from [`docs/agent-prompt.md`](docs/agent-prompt.md).
+
 ## Git workflow (3 people)
 
 `main` is protected and always runnable. Everything happens on short-lived branches
