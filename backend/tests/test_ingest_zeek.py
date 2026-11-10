@@ -83,6 +83,28 @@ def test_timestamp_and_event_ids_are_contract_safe() -> None:
         assert set(event_id) <= set("0123456789ABCDEFGHJKMNPQRSTVWXYZ")
 
 
+def test_escaped_characters_are_unescaped() -> None:
+    raw = (
+        "#separator \\x09\n"
+        "#fields\tts\tnote\tmsg\n"
+        "#types\ttime\tenum\tstring\n"
+        "1794302062.481\tScan::Port_Scan\t203.0.113.44\\x09swept\\x2c1-1024\n"
+    )
+    event = parse_notice_log(raw)[0]
+    assert event["description"] == "203.0.113.44\tswept,1-1024"
+
+
+def test_escaped_unset_tokens_stay_values() -> None:
+    raw = (
+        "#separator \\x09\n"
+        "#fields\tts\tnote\tmsg\n"
+        "#types\ttime\tenum\tstring\n"
+        "1794302062.481\tScan::Port_Scan\t\\x2d\n"
+    )
+    event = parse_notice_log(raw)[0]
+    assert event["description"] == "-"
+
+
 def test_unset_and_empty_fields_become_nulls() -> None:
     unknown = parse_notice_log(fixture_text())[-1]
 

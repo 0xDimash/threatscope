@@ -11,6 +11,7 @@ row — unusable rows are skipped so one malformed line cannot drop a whole capt
 
 from __future__ import annotations
 
+import re
 from typing import Any, Optional
 
 from app.ingest.base import Severity, iso_utc, make_event
@@ -108,6 +109,14 @@ _RULES_BY_PREFIX = sorted(NOTICE_RULES, key=lambda rule: len(rule[0]), reverse=T
 # Zeek writes these tokens for "field unset" and "empty value".
 _UNSET_TOKENS = frozenset({"-", "(empty)"})
 
+# Zeek escapes control characters and the separator itself as \xHH.
+_ESCAPED_BYTE = re.compile(r"\\x([0-9a-fA-F]{2})")
+
+
+def _unescape(value: str) -> str:
+    """Decode Zeek's ``\\xHH`` field escapes, e.g. ``\\x09`` -> a tab."""
+    return _ESCAPED_BYTE.sub(lambda match: chr(int(match.group(1), 16)), value)
+
 
 def classify_notice(note: Optional[str]) -> tuple[str, Severity, Optional[dict[str, Any]]]:
     """Map a Zeek notice name to ``(type, severity, mitre)``.
@@ -124,13 +133,17 @@ def classify_notice(note: Optional[str]) -> tuple[str, Severity, Optional[dict[s
 
 
 def _clean(value: Optional[str]) -> Optional[str]:
-    """Normalise a raw Zeek field to ``None`` when it carries no value."""
+    """Normalise a raw Zeek field to ``None`` when it carries no value.
+
+    Unset/empty tokens are checked before unescaping so a field that genuinely contains
+    an escaped ``-`` or ``(empty)`` is not mistaken for a missing value.
+    """
     if value is None:
         return None
     stripped = value.strip()
     if not stripped or stripped in _UNSET_TOKENS:
         return None
-    return stripped
+    return _unescape(stripped)
 
 
 def _decode_separator(value: str) -> str:
