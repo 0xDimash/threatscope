@@ -31,7 +31,7 @@ Legend: **O** = owner (decides, reviews, merges), **C** = contributes, **R** = r
 | Ingest parsers (Zeek, Suricata, syslog, EVTX) | `backend/app/ingest` | – | **O** | R |
 | Threat model, ATT&CK mapping, risk engine | `backend/app/services`, `docs/threat-model.md` | – | **O** | C |
 | REST/WS API, auth, schemas | `backend/app/api`, `backend/app/core` | – | C | **O** |
-| Database schema & migrations | `backend/app/models`, `infra/db` | – | C | **O** |
+| Database schema & migrations | `backend/app/models`, `backend/migrations`, `backend/app/core/db.py` | – | C | **O** |
 | Docker, CI, deployment, secrets | `infra/`, `.github/` | – | – | **O** |
 | Simulator (demo attack feed) | `simulator/` | C | **O** | C |
 | Tests | `backend/tests`, `frontend` tests | – | C | **O** |

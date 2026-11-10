@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    database_url: str = "postgresql+psycopg://threatscope:threatscope@localhost:5432/threatscope"
+    database_url: str = "sqlite+pysqlite:///./data/threatscope.db"
     cors_origins: str = "http://localhost:5173"
     log_level: str = "info"
 

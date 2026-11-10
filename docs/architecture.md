@@ -46,11 +46,14 @@ FastAPI routers. REST for resources, WebSocket for the live feed.
 
 OpenAPI is auto-generated at `/docs` — that is the backend's contract with the frontend.
 
-### 4. Persistence (`backend/app/models/`, `infra/db/`)
+### 4. Persistence (`backend/app/models/`, `backend/app/core/db.py`)
 
-- PostgreSQL, `timescaledb` extension for `events` (hypertable by `ts`).
+- SQLite (WAL mode), one file at `backend/data/threatscope.db`. See
+  [`adr/0002-sqlite.md`](adr/0002-sqlite.md).
 - Tables: `assets`, `links`, `events`, `risk_snapshots`, `incidents`.
+- Index `events(ts)` and `events(dst_asset_id)`; all queries are `ts BETWEEN` ranges.
 - SQLAlchemy models + Alembic migrations. Migrations are the only way to change schema.
+- Portable column types only, so Postgres remains a `DATABASE_URL` change.
 
 ### 5. Frontend (`frontend/`)
 

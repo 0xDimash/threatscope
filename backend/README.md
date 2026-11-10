@@ -1,6 +1,6 @@
 # Backend — ThreatScope 3D
 
-FastAPI + SQLAlchemy + TimescaleDB.
+FastAPI + SQLAlchemy + SQLite (WAL).
 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
@@ -17,6 +17,7 @@ ruff check .
 | `app/api/` | routers, request/response schemas | Cyber B |
 | `app/core/` | config, security, auth | Cyber B |
 | `app/models/` | SQLAlchemy tables | Cyber B |
+| `app/core/db.py` | engine, session, SQLite pragmas | Cyber B |
 | `app/schemas/` | Pydantic DTOs shared with API | Cyber B |
 | `app/ingest/` | adapters: raw log → `SecurityEvent` | Cyber A |
 | `app/services/` | enrichment, risk engine, correlation | Cyber A |

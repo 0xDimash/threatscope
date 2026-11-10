@@ -25,7 +25,7 @@ between the three areas.
 
 ## Architecture (one paragraph)
 
-Browser (Three.js/Vite) ⇄ REST + WebSocket ⇄ FastAPI backend ⇄ PostgreSQL/TimescaleDB.
+Browser (Three.js/Vite) ⇄ REST + WebSocket ⇄ FastAPI backend ⇄ SQLite (single file).
 A parser layer normalises heterogeneous security feeds (Zeek, Suricata, syslog, Windows Event,
 CSV/JSON) into a single **`SecurityEvent`** contract; a service layer enriches it (severity,
 MITRE ATT&CK technique, asset mapping, risk score); the API streams events to the frontend,
@@ -33,8 +33,8 @@ which renders them as animated attack arcs on a 3D city model.
 
 ```
  ┌────────────┐   REST/WS    ┌──────────────┐   SQL   ┌───────────────────┐
- │  frontend  │ ───────────▶ │   backend    │ ──────▶ │  PostgreSQL        │
- │  (Three.js)│ ◀─────────── │  (FastAPI)   │         │  + TimescaleDB     │
+ │  frontend  │ ───────────▶ │   backend    │ ──────▶ │  SQLite            │
+ │  (Three.js)│ ◀─────────── │  (FastAPI)   │         │  backend/data/*.db │
  └────────────┘              └──────┬───────┘         └───────────────────┘
                                     │ ingest
                               ┌─────▼──────┐
@@ -44,7 +44,7 @@ which renders them as animated attack arcs on a 3D city model.
 ```
 
 Full detail: [`docs/architecture.md`](docs/architecture.md) ·
-Stack decision: [`docs/adr/0001-stack.md`](docs/adr/0001-stack.md) ·
+Stack decision: [`docs/adr/0001-stack.md`](docs/adr/0001-stack.md), [`0002-sqlite.md`](docs/adr/0002-sqlite.md) ·
 Shared data contract: [`docs/api-contract.md`](docs/api-contract.md)
 
 ---
@@ -66,14 +66,14 @@ threatscope/
 
 ## Getting started
 
-Prerequisites: Node 20+, Python 3.11+, Docker Desktop.
+Prerequisites: Node 20+, Python 3.9+, Docker Desktop (optional).
 
 ```bash
 git clone git@github.com:<org>/threatscope.git
 cd threatscope
-cp .env.example .env          # once it exists; ask Cybersec B
-make up                       # docker: postgres + backend + frontend
-make seed                     # load sample assets & events
+cp .env.example .env
+make up                       # docker: backend + frontend
+make simulate                 # stream synthetic attacks
 ```
 
 Without Docker:

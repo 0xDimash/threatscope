@@ -34,6 +34,8 @@ htmlcov/
 # Data / runtime
 *.sqlite3
 *.db
+*.db-wal
+*.db-shm
 infra/data/
 data/raw/
 *.log

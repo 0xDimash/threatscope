@@ -1,6 +1,7 @@
 # ADR 0001 — Technology stack
 
-- **Status:** proposed (confirm at week 1 sync)
+- **Status:** accepted, except the DB row — superseded by
+  [`0002-sqlite.md`](0002-sqlite.md) (SQLite instead of PostgreSQL/TimescaleDB)
 - **Date:** 2026-11-10
 
 ## Context
