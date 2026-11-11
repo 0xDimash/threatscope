@@ -1,7 +1,10 @@
 # AGENTS.md — instructions for AI agents working in this repo
 
-You are assisting one member of a 3-person diploma team building **ThreatScope 3D**, an
-interactive 3D platform for cybersecurity threat visualization and analysis.
+**ThreatScope 3D** is an interactive 3D platform for cybersecurity threat visualization and
+analysis, built by a three-person diploma team. This file applies to everyone working in the
+repository — humans and AI agents alike — regardless of which team member is being assisted
+and which lane the current task covers. It states the rules of the repo; the per-lane
+assignments live in `docs/team.md`.
 
 Repository: `https://github.com/0xDimash/threatscope`
 Default branch: `main` (protected — **never push to it directly**).
@@ -10,8 +13,25 @@ Default branch: `main` (protected — **never push to it directly**).
 
 1. `docs/api-contract.md` — the shared data shapes. This is the contract between frontend,
    ingestion, and API. Do not silently change it.
-2. `docs/team.md` — ownership zones and conventions.
+2. `docs/team.md` — ownership lanes and conventions.
 3. `docs/architecture.md` — how the pieces fit.
+4. `docs/backlog.md` — the current sprint, one task per lane.
+
+## Lanes
+
+The work is split into three lanes, one per team member. A task belongs to one lane, and the
+lane decides which paths may be touched.
+
+| Lane | Zone |
+|---|---|
+| Design — frontend, 3D scene, HUD, product direction | `frontend/src/scene`, `frontend/src/viz`, `frontend/src/ui`, `frontend/src/styles`, `docs/` |
+| Threat intel — event meaning, severity, ATT&CK | `backend/app/ingest`, `backend/app/services`, `simulator/`, `docs/threat-model.md` |
+| Platform — API, database, deployment, CI | `backend/app/api`, `backend/app/core`, `backend/app/models`, `backend/app/schemas`, `backend/tests`, `infra/`, `.github/`, `frontend/src/data` |
+| Shared — all three lanes agree | `docs/api-contract.md` + `contract/` fixtures, `README.md`, `Makefile`, `docs/backlog.md` |
+
+Files at the repository root that are not listed above (`AGENTS.md`, `docs/adr/`,
+`.editorconfig`, `.gitignore`) are edited by the lane working on that topic; say so in the PR
+body so the other lanes can review.
 
 ## Credentials
 
@@ -49,7 +69,7 @@ git pull --rebase
 git switch -c feat/<area>-<slug>        # or fix/…, docs/…, chore/…
 ```
 
-1. Implement **only inside the owner's zone** (see below).
+1. Implement **only inside the zone of the lane you are working on** (see above).
 2. Run the checks for the touched side.
 3. Commit in small logical units.
 4. Rebase onto `origin/main` before pushing.
@@ -88,16 +108,9 @@ If a check fails, fix it. Do not disable rules, add `# noqa`, or skip tests to g
 
 ## Ownership zones — do not edit across them
 
-| Zone | Paths |
-|---|---|
-| Design owner (you) | `frontend/src/scene`, `frontend/src/viz`, `frontend/src/ui`, `frontend/src/styles`, `docs/` |
-| Cyber A (threat intel) | `backend/app/ingest`, `backend/app/services`, `simulator/`, `docs/threat-model.md` |
-| Cyber B (platform) | `backend/app/api`, `backend/app/core`, `backend/app/models`, `backend/app/schemas`, `backend/tests`, `infra/`, `.github/`, `frontend/src/data` |
-| Shared | `docs/api-contract.md` + `contract/` fixtures (all three agree), `README.md`, `Makefile`, `docs/backlog.md` |
-
-If a task requires changing someone else's zone, **stop** and ask the human, or open a draft PR
-scoped to your own zone and describe the needed change in the PR body. Do not make "drive-by"
-edits in another zone.
+A task that requires changing another lane's zone is not yours to finish. Either **stop and
+ask the human**, or open a draft PR scoped to your own zone and describe the needed change in
+the PR body. Do not make "drive-by" edits in another zone.
 
 ## Contract discipline
 
