@@ -1,7 +1,7 @@
 # Backlog — current sprint
 
 Six issues, one per lane slot. Copy each into GitHub Issues (or create them from the prefilled
-links) and assign the owner. A task is done when the PR is approved, CI is green, and it
+links) and assign the owner. A task is done when CI is green and it
 runs from `main`.
 
 Reference: [`parallel-work.md`](parallel-work.md) for the seams,
