@@ -1,0 +1,581 @@
+{
+  "assets": [
+    {
+      "id": "asset-apt-group",
+      "name": "APT Group",
+      "kind": "external",
+      "criticality": 1,
+      "district": "Turksib",
+      "position": {
+        "x": -16,
+        "y": 24,
+        "z": -44
+      },
+      "tags": [
+        "threat-actor"
+      ]
+    },
+    {
+      "id": "asset-botnet-cluster",
+      "name": "Botnet Cluster",
+      "kind": "external",
+      "criticality": 1,
+      "district": "Alatau",
+      "position": {
+        "x": 0,
+        "y": 25,
+        "z": -46
+      },
+      "tags": [
+        "threat-actor"
+      ]
+    },
+    {
+      "id": "asset-scanner-host",
+      "name": "Scanner Host",
+      "kind": "external",
+      "criticality": 1,
+      "district": "Alatau",
+      "position": {
+        "x": 16,
+        "y": 24,
+        "z": -44
+      },
+      "tags": [
+        "threat-actor"
+      ]
+    },
+    {
+      "id": "asset-city-perimeter-fw",
+      "name": "City Perimeter FW",
+      "kind": "gateway",
+      "criticality": 4,
+      "district": "Alatau",
+      "position": {
+        "x": 0,
+        "y": 17,
+        "z": -33
+      },
+      "tags": [
+        "perimeter"
+      ],
+      "ip": "10.10.0.1"
+    },
+    {
+      "id": "asset-egov-gateway",
+      "name": "Egov Gateway",
+      "kind": "gateway",
+      "criticality": 4,
+      "district": "Zhetysu",
+      "position": {
+        "x": 17,
+        "y": 16,
+        "z": -28
+      },
+      "tags": [
+        "perimeter"
+      ],
+      "ip": "10.10.0.2"
+    },
+    {
+      "id": "asset-egov-portal",
+      "name": "Egov Portal",
+      "kind": "service",
+      "criticality": 4,
+      "district": "Nauryzbay",
+      "position": {
+        "x": -22,
+        "y": 11,
+        "z": -12
+      },
+      "tags": [
+        "public"
+      ],
+      "ip": "10.10.4.21"
+    },
+    {
+      "id": "asset-akimat-portal",
+      "name": "Akimat Portal",
+      "kind": "service",
+      "criticality": 3,
+      "district": "Almaly",
+      "position": {
+        "x": -2,
+        "y": 11,
+        "z": -8
+      },
+      "tags": [
+        "public"
+      ],
+      "ip": "10.10.4.22"
+    },
+    {
+      "id": "asset-112-emergency",
+      "name": "112 Emergency",
+      "kind": "service",
+      "criticality": 4,
+      "district": "Zhetysu",
+      "position": {
+        "x": 14,
+        "y": 11,
+        "z": -15
+      },
+      "tags": [
+        "public"
+      ],
+      "ip": "10.10.4.23"
+    },
+    {
+      "id": "asset-open-data-portal",
+      "name": "Open Data Portal",
+      "kind": "service",
+      "criticality": 2,
+      "district": "Zhetysu",
+      "position": {
+        "x": 28,
+        "y": 10,
+        "z": -6
+      },
+      "tags": [
+        "public"
+      ],
+      "ip": "10.10.4.24"
+    },
+    {
+      "id": "asset-municipal-dc",
+      "name": "Municipal DC",
+      "kind": "server",
+      "criticality": 5,
+      "district": "Almaly",
+      "position": {
+        "x": 0,
+        "y": 4,
+        "z": 2
+      },
+      "tags": [
+        "core"
+      ],
+      "ip": "10.10.1.10"
+    },
+    {
+      "id": "asset-citizen-registry-db",
+      "name": "Citizen Registry DB",
+      "kind": "db",
+      "criticality": 5,
+      "district": "Almaly",
+      "position": {
+        "x": -15,
+        "y": 4,
+        "z": 8
+      },
+      "tags": [
+        "core"
+      ],
+      "ip": "10.10.2.5"
+    },
+    {
+      "id": "asset-utility-payment-gw",
+      "name": "Utility Payment GW",
+      "kind": "gateway",
+      "criticality": 4,
+      "district": "Bostandyk",
+      "position": {
+        "x": 15,
+        "y": 4,
+        "z": 8
+      },
+      "tags": [
+        "core"
+      ],
+      "ip": "10.10.2.6"
+    },
+    {
+      "id": "asset-water-scada",
+      "name": "Water SCADA",
+      "kind": "scada",
+      "criticality": 5,
+      "district": "Auezov",
+      "position": {
+        "x": -28,
+        "y": -2.5,
+        "z": 14
+      },
+      "tags": [
+        "critical-infrastructure",
+        "ics"
+      ],
+      "ip": "10.20.0.5"
+    },
+    {
+      "id": "asset-power-grid-scada",
+      "name": "Power Grid SCADA",
+      "kind": "scada",
+      "criticality": 5,
+      "district": "Medeu",
+      "position": {
+        "x": 26,
+        "y": -2.5,
+        "z": 18
+      },
+      "tags": [
+        "critical-infrastructure",
+        "ics"
+      ],
+      "ip": "10.20.0.6"
+    },
+    {
+      "id": "asset-traffic-control",
+      "name": "Traffic Control",
+      "kind": "scada",
+      "criticality": 4,
+      "district": "Turksib",
+      "position": {
+        "x": 5,
+        "y": -2.5,
+        "z": -12
+      },
+      "tags": [
+        "critical-infrastructure",
+        "ics"
+      ],
+      "ip": "10.20.0.7"
+    },
+    {
+      "id": "asset-cctv-network",
+      "name": "CCTV Network",
+      "kind": "cctv",
+      "criticality": 4,
+      "district": "Almaly",
+      "position": {
+        "x": 17,
+        "y": -2.5,
+        "z": 1
+      },
+      "tags": [
+        "critical-infrastructure"
+      ],
+      "ip": "10.30.0.1"
+    },
+    {
+      "id": "asset-transit-onay",
+      "name": "Transit (ONAY)",
+      "kind": "scada",
+      "criticality": 3,
+      "district": "Turksib",
+      "position": {
+        "x": -15,
+        "y": -2.5,
+        "z": -8
+      },
+      "tags": [
+        "critical-infrastructure",
+        "ics"
+      ],
+      "ip": "10.20.0.8"
+    },
+    {
+      "id": "asset-city-health-net",
+      "name": "City Health Net",
+      "kind": "scada",
+      "criticality": 4,
+      "district": "Bostandyk",
+      "position": {
+        "x": 18,
+        "y": -2.5,
+        "z": 27
+      },
+      "tags": [
+        "critical-infrastructure",
+        "ics"
+      ],
+      "ip": "10.20.0.9"
+    },
+    {
+      "id": "asset-district-nauryzbay",
+      "name": "Nauryzbay",
+      "kind": "district",
+      "criticality": 2,
+      "district": "Nauryzbay",
+      "position": {
+        "x": -33,
+        "y": -3.9,
+        "z": -10
+      },
+      "tags": [
+        "district"
+      ]
+    },
+    {
+      "id": "asset-district-auezov",
+      "name": "Auezov",
+      "kind": "district",
+      "criticality": 2,
+      "district": "Auezov",
+      "position": {
+        "x": -27,
+        "y": -3.9,
+        "z": 22
+      },
+      "tags": [
+        "district"
+      ]
+    },
+    {
+      "id": "asset-district-almaly",
+      "name": "Almaly",
+      "kind": "district",
+      "criticality": 2,
+      "district": "Almaly",
+      "position": {
+        "x": -2,
+        "y": -3.9,
+        "z": 4
+      },
+      "tags": [
+        "district"
+      ]
+    },
+    {
+      "id": "asset-district-bostandyk",
+      "name": "Bostandyk",
+      "kind": "district",
+      "criticality": 2,
+      "district": "Bostandyk",
+      "position": {
+        "x": 12,
+        "y": -3.9,
+        "z": 20
+      },
+      "tags": [
+        "district"
+      ]
+    },
+    {
+      "id": "asset-district-medeu",
+      "name": "Medeu",
+      "kind": "district",
+      "criticality": 2,
+      "district": "Medeu",
+      "position": {
+        "x": 28,
+        "y": -3.9,
+        "z": 31
+      },
+      "tags": [
+        "district"
+      ]
+    },
+    {
+      "id": "asset-district-turksib",
+      "name": "Turksib",
+      "kind": "district",
+      "criticality": 2,
+      "district": "Turksib",
+      "position": {
+        "x": -6,
+        "y": -3.9,
+        "z": -22
+      },
+      "tags": [
+        "district"
+      ]
+    },
+    {
+      "id": "asset-district-zhetysu",
+      "name": "Zhetysu",
+      "kind": "district",
+      "criticality": 2,
+      "district": "Zhetysu",
+      "position": {
+        "x": 22,
+        "y": -3.9,
+        "z": -18
+      },
+      "tags": [
+        "district"
+      ]
+    },
+    {
+      "id": "asset-district-alatau",
+      "name": "Alatau",
+      "kind": "district",
+      "criticality": 2,
+      "district": "Alatau",
+      "position": {
+        "x": 6,
+        "y": -3.9,
+        "z": -32
+      },
+      "tags": [
+        "district"
+      ]
+    }
+  ],
+  "links": [
+    {
+      "source": "asset-apt-group",
+      "target": "asset-city-perimeter-fw",
+      "kind": "network"
+    },
+    {
+      "source": "asset-botnet-cluster",
+      "target": "asset-city-perimeter-fw",
+      "kind": "network"
+    },
+    {
+      "source": "asset-scanner-host",
+      "target": "asset-city-perimeter-fw",
+      "kind": "network"
+    },
+    {
+      "source": "asset-city-perimeter-fw",
+      "target": "asset-egov-gateway",
+      "kind": "network"
+    },
+    {
+      "source": "asset-city-perimeter-fw",
+      "target": "asset-egov-portal",
+      "kind": "network"
+    },
+    {
+      "source": "asset-city-perimeter-fw",
+      "target": "asset-112-emergency",
+      "kind": "network"
+    },
+    {
+      "source": "asset-city-perimeter-fw",
+      "target": "asset-akimat-portal",
+      "kind": "network"
+    },
+    {
+      "source": "asset-egov-gateway",
+      "target": "asset-municipal-dc",
+      "kind": "network"
+    },
+    {
+      "source": "asset-egov-portal",
+      "target": "asset-municipal-dc",
+      "kind": "network"
+    },
+    {
+      "source": "asset-akimat-portal",
+      "target": "asset-municipal-dc",
+      "kind": "network"
+    },
+    {
+      "source": "asset-112-emergency",
+      "target": "asset-municipal-dc",
+      "kind": "network"
+    },
+    {
+      "source": "asset-open-data-portal",
+      "target": "asset-municipal-dc",
+      "kind": "network"
+    },
+    {
+      "source": "asset-municipal-dc",
+      "target": "asset-citizen-registry-db",
+      "kind": "dependency"
+    },
+    {
+      "source": "asset-municipal-dc",
+      "target": "asset-utility-payment-gw",
+      "kind": "dependency"
+    },
+    {
+      "source": "asset-municipal-dc",
+      "target": "asset-water-scada",
+      "kind": "network"
+    },
+    {
+      "source": "asset-municipal-dc",
+      "target": "asset-power-grid-scada",
+      "kind": "network"
+    },
+    {
+      "source": "asset-municipal-dc",
+      "target": "asset-traffic-control",
+      "kind": "network"
+    },
+    {
+      "source": "asset-municipal-dc",
+      "target": "asset-cctv-network",
+      "kind": "network"
+    },
+    {
+      "source": "asset-municipal-dc",
+      "target": "asset-transit-onay",
+      "kind": "network"
+    },
+    {
+      "source": "asset-municipal-dc",
+      "target": "asset-city-health-net",
+      "kind": "network"
+    },
+    {
+      "source": "asset-municipal-dc",
+      "target": "asset-district-almaly",
+      "kind": "dataflow"
+    },
+    {
+      "source": "asset-municipal-dc",
+      "target": "asset-district-bostandyk",
+      "kind": "dataflow"
+    },
+    {
+      "source": "asset-municipal-dc",
+      "target": "asset-district-turksib",
+      "kind": "dataflow"
+    },
+    {
+      "source": "asset-municipal-dc",
+      "target": "asset-district-zhetysu",
+      "kind": "dataflow"
+    },
+    {
+      "source": "asset-municipal-dc",
+      "target": "asset-district-alatau",
+      "kind": "dataflow"
+    },
+    {
+      "source": "asset-water-scada",
+      "target": "asset-district-nauryzbay",
+      "kind": "dataflow"
+    },
+    {
+      "source": "asset-water-scada",
+      "target": "asset-district-auezov",
+      "kind": "dataflow"
+    },
+    {
+      "source": "asset-power-grid-scada",
+      "target": "asset-district-medeu",
+      "kind": "dataflow"
+    },
+    {
+      "source": "asset-power-grid-scada",
+      "target": "asset-district-zhetysu",
+      "kind": "dataflow"
+    },
+    {
+      "source": "asset-city-health-net",
+      "target": "asset-district-bostandyk",
+      "kind": "dataflow"
+    },
+    {
+      "source": "asset-transit-onay",
+      "target": "asset-district-turksib",
+      "kind": "dataflow"
+    },
+    {
+      "source": "asset-traffic-control",
+      "target": "asset-district-alatau",
+      "kind": "dataflow"
+    },
+    {
+      "source": "asset-cctv-network",
+      "target": "asset-district-almaly",
+      "kind": "dataflow"
+    }
+  ]
+}
