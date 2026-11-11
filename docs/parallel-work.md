@@ -79,7 +79,7 @@ Without it you will spend week three reconciling two different ideas of what
   factory.
 - **Rebase daily**, never merge `main` into a feature branch:
   `git pull --rebase origin main`.
-- **Small PRs** (< ~400 lines), one approval, squash merge, delete branch.
+- **Small PRs** (< ~400 lines), CI green, squash merge, delete branch.
 - **Two people must never edit the same file at the same time.** Split the file or sequence the
   work. The only files this is likely to happen with are listed in rule 3.5 above.
 

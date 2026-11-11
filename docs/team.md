@@ -18,7 +18,7 @@ designer blocked on data. Instead:
 
 ## Responsibility matrix
 
-Legend: **O** = owner (decides, reviews, merges), **C** = contributes, **R** = reviewer.
+Legend: **O** = owner (decides and reviews the zone), **C** = contributes, **R** = reviewer.
 
 | Area | Files | You | Cyber A | Cyber B |
 |---|---|:--:|:--:|:--:|
@@ -36,8 +36,9 @@ Legend: **O** = owner (decides, reviews, merges), **C** = contributes, **R** = r
 | Simulator (demo attack feed) | `simulator/` | C | **O** | C |
 | Tests | `backend/tests`, `frontend` tests | – | C | **O** |
 
-Rule of thumb: **the O is the only person who merges into that zone.** Anyone may propose a
-PR there, but the owner reviews and approves.
+Rule of thumb: **the O decides what goes into that zone and is the person to review it.**
+Anyone may propose a PR there; merges are gated by CI (`test` + `typecheck`), not by approval,
+so merge your own PR once the checks are green.
 
 ## How the three areas connect
 
@@ -85,7 +86,8 @@ a documented manual check, and visible in the Friday demo.
   `refactor`, `test`, `chore`, `perf`.
 - PR title = same format. PR body: what / why / how tested / screenshots (UI PRs must have a
   screenshot or a short screen recording).
-- One approval required. The zone owner merges.
+- No approval required. Merge your own PR once CI (`test` + `typecheck`) is green; squash and
+  delete the branch. Ask the zone owner to review if you are unsure.
 - Keep `main` green. If you break it, fix it forward or revert immediately.
 - Never commit `.env`, credentials, dumps, or large binaries. Datasets go to `infra/data/`
   (gitignored) and are documented, not committed — or use Git LFS if truly needed.

@@ -80,7 +80,9 @@ If a check fails, fix it. Do not disable rules, add `# noqa`, or skip tests to g
 - Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `perf`.
 - PR title = same format. Fill `.github/pull_request_template.md`.
 - Any PR touching rendered UI needs a screenshot or short recording in the description.
-- Do not merge your own PR unless you are the zone owner. Never merge someone else's.
+- Merges are gated by CI, not review: `main` requires the `test` and `typecheck` checks to
+  pass. Anyone may merge their own PR once CI is green (squash, delete the branch). Ask the
+  zone owner to review if you are unsure.
 - Never force-push `main` or a shared branch. Force-push only your own feature branch, and only
   with `--force-with-lease`.
 

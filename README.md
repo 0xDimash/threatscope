@@ -113,7 +113,8 @@ Rules:
 
 1. **One branch per task**, named `feat/<area>-<short>`, `fix/…`, `docs/…`, `chore/…`.
    Example: `feat/frontend-attack-arcs`, `feat/ingest-suricata-parser`.
-2. **Never push to `main` directly** — PR + 1 approval from another member.
+2. **Never push to `main` directly** — open a PR; it merges once CI (`test` + `typecheck`) is
+   green.
 3. **Small PRs** (< ~400 lines). If it is bigger, split it.
 4. **Rebase on `main` before opening** (`git pull --rebase origin main`).
 5. **Commit messages**: `type(scope): summary` — `feat(frontend): add severity filter`,
@@ -145,8 +146,9 @@ Troubleshooting:
 
 ### Branch protection (repo owner, once)
 
-Settings → Branches → Add branch protection rule → `main` → require a pull request and
-1 approval. Until this is on, the rules below are enforced by discipline only.
+Settings → Branches → Add branch protection rule → `main` → require the `test` and
+`typecheck` status checks. No approving reviews are required — CI is the merge gate, so
+teammates may merge their own PRs once the checks are green.
 
 ---
 
