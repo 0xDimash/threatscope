@@ -91,7 +91,7 @@ If a check fails, fix it. Do not disable rules, add `# noqa`, or skip tests to g
 | Design owner (you) | `frontend/src/scene`, `frontend/src/viz`, `frontend/src/ui`, `frontend/src/styles`, `docs/` |
 | Cyber A (threat intel) | `backend/app/ingest`, `backend/app/services`, `simulator/`, `docs/threat-model.md` |
 | Cyber B (platform) | `backend/app/api`, `backend/app/core`, `backend/app/models`, `backend/app/schemas`, `backend/tests`, `infra/`, `.github/`, `frontend/src/data` |
-| Shared | `docs/api-contract.md` (all three agree), `README.md`, `Makefile` |
+| Shared | `docs/api-contract.md` + `contract/` fixtures (all three agree), `README.md`, `Makefile`, `docs/backlog.md` |
 
 If a task requires changing someone else's zone, **stop** and ask the human, or open a draft PR
 scoped to your own zone and describe the needed change in the PR body. Do not make "drive-by"

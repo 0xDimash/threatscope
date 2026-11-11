@@ -48,7 +48,10 @@ which renders them as animated attack arcs on a 3D city model.
 
 Full detail: [`docs/architecture.md`](docs/architecture.md) ·
 Stack decision: [`docs/adr/0001-stack.md`](docs/adr/0001-stack.md), [`0002-sqlite.md`](docs/adr/0002-sqlite.md) ·
-Shared data contract: [`docs/api-contract.md`](docs/api-contract.md)
+Shared data contract: [`docs/api-contract.md`](docs/api-contract.md) ·
+Contract fixtures: [`contract/`](contract/) ·
+How we work in parallel: [`docs/parallel-work.md`](docs/parallel-work.md) ·
+Current backlog: [`docs/backlog.md`](docs/backlog.md)
 
 ---
 
@@ -60,7 +63,8 @@ threatscope/
 ├── backend/         # FastAPI: API, ingestion, risk engine, SQLite file
 ├── simulator/       # synthetic attack feed for demos & tests
 ├── infra/           # docker-compose, Dockerfiles
-├── docs/            # architecture, threat model, API contract, ADRs
+├── contract/        # executable fixtures shared by backend and frontend
+├── docs/            # architecture, threat model, API contract, ADRs, backlog
 ├── .github/         # PR template, CI
 └── Makefile         # one-liners for the whole team
 ```
