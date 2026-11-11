@@ -62,6 +62,18 @@ def get_session() -> Iterator[Session]:
 
 
 def init_db() -> None:
-    """Create missing tables. Schema changes go through Alembic."""
-    with engine.begin() as connection:
-        Base.metadata.create_all(bind=connection)
+    """Bring the database up to the latest Alembic revision.
+
+    Startup runs migrations instead of ``create_all`` so a fresh clone, a Docker container
+    and a developer machine all end up with the same schema. Migrations are the only way to
+    change it (``docs/architecture.md``).
+    """
+    from alembic import command
+    from alembic.config import Config
+
+    from app.core.config import BACKEND_DIR
+
+    config = Config(str(BACKEND_DIR / "alembic.ini"))
+    config.set_main_option("script_location", str(BACKEND_DIR / "migrations"))
+    config.set_main_option("sqlalchemy.url", settings.database_url)
+    command.upgrade(config, "head")

@@ -1,4 +1,4 @@
-.PHONY: help up down logs backend frontend simulate test lint reset-db
+.PHONY: help up down logs backend frontend simulate test lint seed migrate reset-db
 
 help:
 	@echo "up        - start backend + frontend in docker"
@@ -8,6 +8,8 @@ help:
 	@echo "simulate  - stream synthetic attacks into the backend"
 	@echo "test      - run backend tests"
 	@echo "lint      - ruff + tsc"
+	@echo "seed      - load data/assets.json into the database"
+	@echo "migrate   - apply alembic migrations"
 	@echo "reset-db  - delete the SQLite database (next start recreates it)"
 
 up:
@@ -34,6 +36,12 @@ test:
 lint:
 	cd backend && ruff check .
 	cd frontend && npm run typecheck
+
+seed:
+	cd backend && python3 -m app.core.seed
+
+migrate:
+	cd backend && python3 -m alembic upgrade head
 
 reset-db:
 	rm -f backend/data/threatscope.db backend/data/threatscope.db-wal backend/data/threatscope.db-shm
