@@ -1,0 +1,87 @@
+[
+  {
+    "id": "01J8Z6K3VQ9F3T0M9W2B7C4D10",
+    "ts": "2026-11-10T09:14:22.481Z",
+    "type": "port_scan",
+    "severity": "low",
+    "src": { "ip": "203.0.113.44", "host": null, "asset_id": null },
+    "dst": { "ip": "10.10.4.21", "host": "egov-portal", "asset_id": "asset-egov-portal" },
+    "description": "TCP SYN sweep across ports 1-1024 on egov-portal",
+    "mitre": {
+      "tactic": "discovery",
+      "technique_id": "T1046",
+      "technique": "Network Service Discovery"
+    },
+    "risk_delta": 1.0,
+    "raw_source": "suricata",
+    "meta": {}
+  },
+  {
+    "id": "01J8Z6K3VQ9F3T0M9W2B7C4D11",
+    "ts": "2026-11-10T09:15:02.115Z",
+    "type": "credential_attack",
+    "severity": "high",
+    "src": { "ip": "203.0.113.88", "host": null, "asset_id": null },
+    "dst": { "ip": "10.10.4.21", "host": "egov-portal", "asset_id": "asset-egov-portal" },
+    "description": "184 failed logins for admin in 60 seconds",
+    "mitre": {
+      "tactic": "credential-access",
+      "technique_id": "T1110",
+      "technique": "Brute Force"
+    },
+    "risk_delta": 6.0,
+    "raw_source": "zeek",
+    "meta": { "attempts": 184, "user": "admin" }
+  },
+  {
+    "id": "01J8Z6K3VQ9F3T0M9W2B7C4D12",
+    "ts": "2026-11-10T09:17:40.900Z",
+    "type": "c2_beacon",
+    "severity": "high",
+    "src": { "ip": "10.10.1.10", "host": "municipal-dc", "asset_id": "asset-municipal-dc" },
+    "dst": { "ip": "198.51.100.7", "host": null, "asset_id": null },
+    "description": "Periodic 5-minute beacon to unknown host, 44 bytes",
+    "mitre": {
+      "tactic": "command-and-control",
+      "technique_id": "T1071",
+      "technique": "Application Layer Protocol"
+    },
+    "risk_delta": 6.0,
+    "raw_source": "zeek",
+    "meta": { "interval_seconds": 300, "bytes": 44 }
+  },
+  {
+    "id": "01J8Z6K3VQ9F3T0M9W2B7C4D13",
+    "ts": "2026-11-10T09:19:08.003Z",
+    "type": "lateral_movement",
+    "severity": "high",
+    "src": { "ip": "10.10.1.10", "host": "municipal-dc", "asset_id": "asset-municipal-dc" },
+    "dst": { "ip": "10.20.0.5", "host": "water-scada", "asset_id": "asset-water-scada" },
+    "description": "SMB session from the data centre into the ICS segment",
+    "mitre": {
+      "tactic": "lateral-movement",
+      "technique_id": "T1021",
+      "technique": "Remote Services"
+    },
+    "risk_delta": 6.0,
+    "raw_source": "zeek",
+    "meta": { "port": 445 }
+  },
+  {
+    "id": "01J8Z6K3VQ9F3T0M9W2B7C4D14",
+    "ts": "2026-11-10T09:21:55.320Z",
+    "type": "scada_intrusion",
+    "severity": "critical",
+    "src": { "ip": "10.10.1.10", "host": "municipal-dc", "asset_id": "asset-municipal-dc" },
+    "dst": { "ip": "10.20.0.5", "host": "water-scada", "asset_id": "asset-water-scada" },
+    "description": "Unauthorised write to a PLC coil register",
+    "mitre": {
+      "tactic": "impact",
+      "technique_id": "T0831",
+      "technique": "Manipulation of Control"
+    },
+    "risk_delta": 10.0,
+    "raw_source": "zeek",
+    "meta": { "protocol": "modbus", "function_code": 5 }
+  }
+]

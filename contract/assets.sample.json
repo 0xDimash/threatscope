@@ -1,0 +1,38 @@
+{
+  "assets": [
+    {
+      "id": "asset-egov-portal",
+      "name": "Egov Portal",
+      "kind": "service",
+      "criticality": 4,
+      "district": "Bostandyk",
+      "position": { "x": 0, "y": 6, "z": 0 },
+      "ip": "10.10.4.21",
+      "tags": ["public"]
+    },
+    {
+      "id": "asset-municipal-dc",
+      "name": "Municipal DC",
+      "kind": "server",
+      "criticality": 5,
+      "district": "Almaly",
+      "position": { "x": -10, "y": 3, "z": 6 },
+      "ip": "10.10.1.10",
+      "tags": ["core"]
+    },
+    {
+      "id": "asset-water-scada",
+      "name": "Water SCADA",
+      "kind": "scada",
+      "criticality": 5,
+      "district": "Almaly",
+      "position": { "x": 12, "y": 3, "z": -8 },
+      "ip": "10.20.0.5",
+      "tags": ["critical-infrastructure", "ics"]
+    }
+  ],
+  "links": [
+    { "source": "asset-egov-portal", "target": "asset-municipal-dc", "kind": "network" },
+    { "source": "asset-municipal-dc", "target": "asset-water-scada", "kind": "dependency" }
+  ]
+}
