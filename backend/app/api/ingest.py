@@ -7,7 +7,9 @@ Two ways in, both writing to the same event store:
 - ``POST /api/ingest/batch`` — already-normalised contract events. The simulator uses this.
 
 Adapters never touch the database; persistence and de-duplication live in
-``app.services.repository``.
+``app.services.repository``. Both handlers broadcast to ``/ws/events`` after storing, which is
+why they are ``async``: the database work runs in the threadpool, the fan-out stays on the
+event loop.
 """
 
 from __future__ import annotations
@@ -15,8 +17,10 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from fastapi import APIRouter, HTTPException
+from starlette.concurrency import run_in_threadpool
 
 from app.api.deps import SessionDep
+from app.api.ws import current_state, manager
 from app.ingest import zeek
 from app.schemas.api import IngestBatchRequest, IngestRequest, IngestResponse
 from app.services import repository
@@ -29,8 +33,16 @@ ADAPTERS: dict[str, Callable[[str], list[dict[str, Any]]]] = {
 }
 
 
+async def _publish(events: list[dict[str, Any]], fresh: int) -> None:
+    """Fan fresh data out to WebSocket clients, then a throttled state frame."""
+    if not fresh:
+        return
+    await manager.broadcast_events(events)
+    await manager.maybe_broadcast_state(await run_in_threadpool(current_state))
+
+
 @router.post("/ingest", response_model=IngestResponse)
-def ingest(request: IngestRequest, session: SessionDep) -> IngestResponse:
+async def ingest(request: IngestRequest, session: SessionDep) -> IngestResponse:
     """Parse raw text with the named adapter and store the resulting events."""
     source = request.source.strip().lower()
     adapter = ADAPTERS.get(source)
@@ -45,15 +57,17 @@ def ingest(request: IngestRequest, session: SessionDep) -> IngestResponse:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    repository.add_events(session, events)
-    return IngestResponse(accepted=len(events), stored=repository.count(session))
+    fresh = await run_in_threadpool(repository.add_events, session, events)
+    stored = await run_in_threadpool(repository.count, session)
+    await _publish(events, fresh)
+    return IngestResponse(accepted=len(events), stored=stored)
 
 
 @router.post("/ingest/batch", response_model=IngestResponse)
-def ingest_batch(
-    batch: IngestBatchRequest, session: SessionDep
-) -> IngestResponse:
+async def ingest_batch(batch: IngestBatchRequest, session: SessionDep) -> IngestResponse:
     """Accept already-normalised events; duplicates are silently skipped."""
     events = [event.model_dump() for event in batch.events]
-    repository.add_events(session, events)
-    return IngestResponse(accepted=len(events), stored=repository.count(session))
+    fresh = await run_in_threadpool(repository.add_events, session, events)
+    stored = await run_in_threadpool(repository.count, session)
+    await _publish(events, fresh)
+    return IngestResponse(accepted=len(events), stored=stored)
