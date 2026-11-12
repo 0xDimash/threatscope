@@ -110,8 +110,8 @@
   gap: 12px;
   width: 100%;
   padding: 16px 18px;
-  border: 1px solid #ffffff;
-  border-radius: 6px;
+  border: none;
+  border-radius: 0;
   background: #000000;
   color: #ffffff;
   font: inherit;
