@@ -46,18 +46,18 @@ export function createGround(): GroundRig {
   floor.position.y = GROUND_LEVEL;
   group.add(floor);
 
-  const grid = new GridHelper(GROUND_SIZE, 28, 0x2f81f7, 0x12304f);
+  const grid = new GridHelper(GROUND_SIZE, 28, 0xffffff, 0x333333);
   grid.name = 'ground-grid';
   grid.position.y = GROUND_LEVEL + 0.05;
   const gridMaterial = grid.material as LineBasicMaterial;
   gridMaterial.transparent = true;
-  gridMaterial.opacity = 0.12;
+  gridMaterial.opacity = 0.06;
   group.add(grid);
 
   return {
     group,
     update(time: number): void {
-      gridMaterial.opacity = 0.14 + Math.sin(time * 0.7) * 0.05;
+      gridMaterial.opacity = 0.07 + Math.sin(time * 0.7) * 0.02;
     },
     dispose(): void {
       apron.geometry.dispose();

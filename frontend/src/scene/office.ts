@@ -16,7 +16,6 @@ import {
   MeshStandardMaterial,
   PerspectiveCamera,
   PlaneGeometry,
-  PointLight,
   Raycaster,
   Scene,
   Sprite,
@@ -350,21 +349,15 @@ function buildRoom(
 function buildLights(): { group: Group; dispose(): void } {
   const group = new Group();
   group.name = 'office-lights';
-  const ambient = new AmbientLight(0x233a58, 1.6);
-  const key = new DirectionalLight(0xbcd8ff, 1.4);
+  const ambient = new AmbientLight(0xffffff, 1.5);
+  const key = new DirectionalLight(0xffffff, 1.6);
   key.position.set(12, 20, 14);
-  const warm = new PointLight(0x2f81f7, 3.2, 40);
-  warm.position.set(-6, 5, -4);
-  const cool = new PointLight(0x38e8d0, 1.4, 34);
-  cool.position.set(9, 4, 4);
-  group.add(ambient, key, warm, cool);
+  group.add(ambient, key);
   return {
     group,
     dispose(): void {
       ambient.dispose();
       key.dispose();
-      warm.dispose();
-      cool.dispose();
     },
   };
 }
