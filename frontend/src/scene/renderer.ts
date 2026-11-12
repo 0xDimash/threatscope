@@ -37,7 +37,7 @@ export function createRenderer(canvas: HTMLCanvasElement, options: RendererOptio
     stencil: false,
     powerPreference: 'high-performance',
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, options.pixelRatio ?? 1.75));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, options.pixelRatio ?? 2));
   renderer.outputColorSpace = SRGBColorSpace;
   renderer.toneMapping = ACESFilmicToneMapping;
   renderer.toneMappingExposure = options.exposure ?? 1.0;

@@ -29,20 +29,22 @@ export function createGlowTexture(): CanvasTexture {
 
 export function createLabelTexture(text: string, color: string): CanvasTexture {
   const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 96;
+  canvas.width = 1024;
+  canvas.height = 192;
   const ctx = canvas.getContext('2d');
   if (ctx) {
-    ctx.font = 'bold 38px "SF Mono", Consolas, monospace';
+    ctx.font = 'bold 76px "SF Mono", Consolas, monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.shadowColor = color;
-    ctx.shadowBlur = 14;
+    ctx.shadowBlur = 20;
     ctx.fillStyle = color;
-    ctx.fillText(text, 256, 48);
+    ctx.fillText(text, 512, 96);
   }
   const texture = new CanvasTexture(canvas);
   texture.minFilter = LinearFilter;
+  texture.magFilter = LinearFilter;
+  texture.anisotropy = 8;
   texture.colorSpace = SRGBColorSpace;
   return texture;
 }
