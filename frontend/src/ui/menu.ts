@@ -37,6 +37,12 @@ export function renderMenu(root: HTMLElement, callbacks: MenuCallbacks): void {
   brand.append(pixelMap);
   startPixelMap(pixelMap);
 
+  const status = document.createElement('div');
+  status.className = 'menu-status';
+  status.innerHTML = '<span class="menu-status-dot" aria-hidden="true"></span><span class="menu-status-text">Checking backend…</span>';
+  brand.append(status);
+  startConnectionStatus(status);
+
   const side = document.createElement('aside');
   side.className = 'menu-side';
 
@@ -266,4 +272,43 @@ function startPixelMap(canvas: HTMLCanvasElement): void {
     handle = requestAnimationFrame(frame);
   }
   handle = requestAnimationFrame(frame);
+}
+
+const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? 'http://localhost:8000';
+
+function startConnectionStatus(root: HTMLElement): void {
+  const text = root.querySelector<HTMLElement>('.menu-status-text');
+
+  const setState = (connected: boolean, label: string): void => {
+    root.classList.toggle('menu-status-ok', connected);
+    root.classList.toggle('menu-status-bad', !connected);
+    if (text) text.textContent = label;
+  };
+
+  const check = async (): Promise<void> => {
+    if (!root.isConnected) return;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 3000);
+    try {
+      const response = await fetch(`${API_BASE}/healthz`, { signal: controller.signal });
+      if (response.ok) {
+        setState(true, 'Backend connected');
+      } else {
+        setState(false, `Backend error ${response.status}`);
+      }
+    } catch {
+      setState(false, 'Backend offline');
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
+
+  void check();
+  const interval = window.setInterval(() => {
+    if (!root.isConnected) {
+      window.clearInterval(interval);
+      return;
+    }
+    void check();
+  }, 5000);
 }

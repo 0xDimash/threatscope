@@ -32,14 +32,38 @@
   text-align: center;
 }
 
-.menu-pixelmap {
-  width: 100%;
-  max-width: 620px;
-  height: auto;
-  aspect-ratio: 2 / 1;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  opacity: 0.85;
+.menu-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: #555555;
+}
+
+.menu-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #333333;
+  transition: background 0.2s ease;
+}
+
+.menu-status-ok .menu-status-dot {
+  background: #ffffff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+}
+
+.menu-status-ok .menu-status-text {
+  color: #b0b3b8;
+}
+
+.menu-status-bad .menu-status-dot {
+  background: #666666;
+}
+
+.menu-status-bad .menu-status-text {
+  color: #666666;
 }
 
 .menu-wordmark {
