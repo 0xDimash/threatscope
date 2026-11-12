@@ -30,6 +30,13 @@ export function renderMenu(root: HTMLElement, callbacks: MenuCallbacks): void {
   brand.className = 'menu-brand';
   brand.innerHTML = `<h1 class="menu-wordmark">ThreatScope</h1>`;
 
+  const pixelMap = document.createElement('canvas');
+  pixelMap.className = 'menu-pixelmap';
+  pixelMap.width = 120;
+  pixelMap.height = 60;
+  brand.append(pixelMap);
+  startPixelMap(pixelMap);
+
   const side = document.createElement('aside');
   side.className = 'menu-side';
 
@@ -90,4 +97,102 @@ export function showNewSpaceNotice(root: HTMLElement): void {
   close.addEventListener('click', () => notice.remove());
   notice.append(close);
   root.append(notice);
+}
+
+function startPixelMap(canvas: HTMLCanvasElement): void {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const COLS = 24;
+  const ROWS = 12;
+  const CELL = canvas.width / COLS;
+
+  interface Dot { c: number; r: number; phase: number; hot: boolean; }
+  const dots: Dot[] = [];
+  for (let r = 0; r < ROWS; r += 1) {
+    for (let c = 0; c < COLS; c += 1) {
+      dots.push({ c, r, phase: Math.random() * Math.PI * 2, hot: Math.random() < 0.06 });
+    }
+  }
+  const indexOf = (c: number, r: number): number => r * COLS + c;
+
+  interface Edge { a: number; b: number; }
+  const edges: Edge[] = [];
+  for (let r = 0; r < ROWS; r += 1) {
+    for (let c = 0; c < COLS; c += 1) {
+      if (c + 1 < COLS) edges.push({ a: indexOf(c, r), b: indexOf(c + 1, r) });
+      if (r + 1 < ROWS) edges.push({ a: indexOf(c, r), b: indexOf(c, r + 1) });
+    }
+  }
+  for (let i = 0; i < 14; i += 1) {
+    const c = Math.floor(Math.random() * (COLS - 1));
+    const r = Math.floor(Math.random() * (ROWS - 1));
+    edges.push({ a: indexOf(c, r), b: indexOf(c + 1, r + 1) });
+  }
+
+  interface Pulse { edge: Edge; t: number; speed: number; }
+  const pulses: Pulse[] = edges.map((edge) => ({
+    edge,
+    t: Math.random(),
+    speed: 0.25 + Math.random() * 0.5,
+  }));
+
+  let last = performance.now();
+  let elapsed = 0;
+  let handle = 0;
+
+  const dotPos = (dot: Dot): { x: number; y: number } => ({
+    x: dot.c * CELL + CELL / 2,
+    y: dot.r * CELL + CELL / 2,
+  });
+
+  function frame(now: number): void {
+    if (!canvas.isConnected) {
+      cancelAnimationFrame(handle);
+      return;
+    }
+    const delta = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    elapsed += delta;
+
+    ctx!.fillStyle = '#000000';
+    ctx!.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx!.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx!.lineWidth = 1;
+    for (const edge of edges) {
+      const a = dotPos(dots[edge.a]);
+      const b = dotPos(dots[edge.b]);
+      ctx!.beginPath();
+      ctx!.moveTo(a.x, a.y);
+      ctx!.lineTo(b.x, b.y);
+      ctx!.stroke();
+    }
+
+    for (const pulse of pulses) {
+      pulse.t += pulse.speed * delta;
+      if (pulse.t > 1) {
+        pulse.t -= 1;
+        pulse.speed = 0.25 + Math.random() * 0.5;
+      }
+      const a = dotPos(dots[pulse.edge.a]);
+      const b = dotPos(dots[pulse.edge.b]);
+      const x = a.x + (b.x - a.x) * pulse.t;
+      const y = a.y + (b.y - a.y) * pulse.t;
+      ctx!.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx!.fillRect(Math.floor(x), Math.floor(y), 2, 2);
+    }
+
+    for (const dot of dots) {
+      const p = dotPos(dot);
+      const breathe = 0.5 + Math.sin(elapsed * 1.4 + dot.phase) * 0.5;
+      const alpha = dot.hot ? 0.95 : 0.25 + breathe * 0.35;
+      ctx!.fillStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+      const size = dot.hot ? 2 : 1;
+      ctx!.fillRect(Math.floor(p.x), Math.floor(p.y), size, size);
+    }
+
+    handle = requestAnimationFrame(frame);
+  }
+  handle = requestAnimationFrame(frame);
 }
