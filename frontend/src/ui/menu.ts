@@ -32,8 +32,8 @@ export function renderMenu(root: HTMLElement, callbacks: MenuCallbacks): void {
 
   const pixelMap = document.createElement('canvas');
   pixelMap.className = 'menu-pixelmap';
-  pixelMap.width = 120;
-  pixelMap.height = 60;
+  pixelMap.width = 160;
+  pixelMap.height = 80;
   brand.append(pixelMap);
   startPixelMap(pixelMap);
 
@@ -103,48 +103,71 @@ function startPixelMap(canvas: HTMLCanvasElement): void {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  const COLS = 24;
-  const ROWS = 12;
-  const CELL = canvas.width / COLS;
+  const W = canvas.width;
+  const H = canvas.height;
 
-  interface Dot { c: number; r: number; phase: number; hot: boolean; }
-  const dots: Dot[] = [];
-  for (let r = 0; r < ROWS; r += 1) {
-    for (let c = 0; c < COLS; c += 1) {
-      dots.push({ c, r, phase: Math.random() * Math.PI * 2, hot: Math.random() < 0.06 });
-    }
-  }
-  const indexOf = (c: number, r: number): number => r * COLS + c;
+  // Build a dim, pixelated equirectangular world map once.
+  const map = document.createElement('canvas');
+  map.width = W;
+  map.height = H;
+  const mctx = map.getContext('2d');
+  if (!mctx) return;
+  mctx.fillStyle = '#000000';
+  mctx.fillRect(0, 0, W, H);
+  mctx.fillStyle = '#ffffff';
 
-  interface Edge { a: number; b: number; }
-  const edges: Edge[] = [];
-  for (let r = 0; r < ROWS; r += 1) {
-    for (let c = 0; c < COLS; c += 1) {
-      if (c + 1 < COLS) edges.push({ a: indexOf(c, r), b: indexOf(c + 1, r) });
-      if (r + 1 < ROWS) edges.push({ a: indexOf(c, r), b: indexOf(c, r + 1) });
-    }
-  }
-  for (let i = 0; i < 14; i += 1) {
-    const c = Math.floor(Math.random() * (COLS - 1));
-    const r = Math.floor(Math.random() * (ROWS - 1));
-    edges.push({ a: indexOf(c, r), b: indexOf(c + 1, r + 1) });
-  }
+  const ellipse = (cx: number, cy: number, rx: number, ry: number): void => {
+    mctx.beginPath();
+    mctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+    mctx.fill();
+  };
 
-  interface Pulse { edge: Edge; t: number; speed: number; }
-  const pulses: Pulse[] = edges.map((edge) => ({
-    edge,
-    t: Math.random(),
-    speed: 0.25 + Math.random() * 0.5,
-  }));
+  // Rough continents in a 120x60 space, scaled to the canvas.
+  const sx = W / 120;
+  const sy = H / 60;
+  const blob = (cx: number, cy: number, rx: number, ry: number): void =>
+    ellipse(cx * sx, cy * sy, rx * sx, ry * sy);
 
+  blob(28, 22, 17, 12); // North America
+  blob(35, 33, 5, 6); // Central America
+  blob(40, 10, 6, 5); // Greenland
+  blob(41, 43, 8, 13); // South America
+  blob(61, 18, 8, 7); // Europe
+  blob(63, 35, 11, 14); // Africa
+  blob(88, 20, 24, 12); // Asia
+  blob(83, 31, 6, 7); // India
+  blob(95, 33, 7, 5); // South-East Asia
+  blob(101, 45, 10, 6); // Australia
+  blob(60, 58, 30, 2); // Antarctica hint
+
+  // Locations highlighted on the map (120x60 space).
+  const CITIES: Array<{ x: number; y: number; phase: number }> = [
+    { x: 86, y: 16, phase: 0.0 }, // Almaty
+    { x: 60, y: 13, phase: 1.3 }, // London
+    { x: 35, y: 17, phase: 2.1 }, // New York
+    { x: 45, y: 39, phase: 3.4 }, // São Paulo
+    { x: 95, y: 30, phase: 4.2 }, // Singapore
+    { x: 107, y: 18, phase: 5.1 }, // Tokyo
+    { x: 111, y: 42, phase: 0.7 }, // Sydney
+    { x: 79, y: 22, phase: 2.8 }, // Dubai
+    { x: 66, y: 42, phase: 4.9 }, // Cape Town
+    { x: 19, y: 17, phase: 3.0 }, // San Francisco
+  ].map((city) => ({ ...city, x: city.x * sx, y: city.y * sy }));
+
+  interface Pulse { a: number; b: number; t: number; speed: number; }
+  const pulses: Pulse[] = [];
+  const PULSE_SPEED = 0.22;
+  let nextSpawn = 0.6;
   let last = performance.now();
   let elapsed = 0;
   let handle = 0;
 
-  const dotPos = (dot: Dot): { x: number; y: number } => ({
-    x: dot.c * CELL + CELL / 2,
-    y: dot.r * CELL + CELL / 2,
-  });
+  function spawnPulse(): void {
+    let a = Math.floor(Math.random() * CITIES.length);
+    let b = Math.floor(Math.random() * CITIES.length);
+    if (a === b) b = (b + 1) % CITIES.length;
+    pulses.push({ a, b, t: 0, speed: PULSE_SPEED + Math.random() * 0.12 });
+  }
 
   function frame(now: number): void {
     if (!canvas.isConnected) {
@@ -156,40 +179,54 @@ function startPixelMap(canvas: HTMLCanvasElement): void {
     elapsed += delta;
 
     ctx!.fillStyle = '#000000';
-    ctx!.fillRect(0, 0, canvas.width, canvas.height);
+    ctx!.fillRect(0, 0, W, H);
 
-    ctx!.strokeStyle = 'rgba(255,255,255,0.05)';
-    ctx!.lineWidth = 1;
-    for (const edge of edges) {
-      const a = dotPos(dots[edge.a]);
-      const b = dotPos(dots[edge.b]);
+    // dimmed land
+    ctx!.globalAlpha = 0.09;
+    ctx!.drawImage(map, 0, 0);
+    ctx!.globalAlpha = 1;
+
+    // occasional connections between locations
+    nextSpawn -= delta;
+    if (nextSpawn <= 0) {
+      spawnPulse();
+      nextSpawn = 2.2 + Math.random() * 2.6;
+    }
+    for (let i = pulses.length - 1; i >= 0; i -= 1) {
+      const pulse = pulses[i];
+      pulse.t += pulse.speed * delta;
+      const a = CITIES[pulse.a];
+      const b = CITIES[pulse.b];
+      if (pulse.t >= 1) {
+        pulses.splice(i, 1);
+        continue;
+      }
+      // faint line while travelling
+      ctx!.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx!.lineWidth = 1;
       ctx!.beginPath();
       ctx!.moveTo(a.x, a.y);
       ctx!.lineTo(b.x, b.y);
       ctx!.stroke();
-    }
 
-    for (const pulse of pulses) {
-      pulse.t += pulse.speed * delta;
-      if (pulse.t > 1) {
-        pulse.t -= 1;
-        pulse.speed = 0.25 + Math.random() * 0.5;
+      // bright head with a short fading trail
+      for (let step = 0; step < 6; step += 1) {
+        const t = pulse.t - step * 0.012;
+        if (t < 0) break;
+        const x = a.x + (b.x - a.x) * t;
+        const y = a.y + (b.y - a.y) * t;
+        const alpha = 0.75 - step * 0.12;
+        ctx!.fillStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+        ctx!.fillRect(Math.floor(x), Math.floor(y), 1, 1);
       }
-      const a = dotPos(dots[pulse.edge.a]);
-      const b = dotPos(dots[pulse.edge.b]);
-      const x = a.x + (b.x - a.x) * pulse.t;
-      const y = a.y + (b.y - a.y) * pulse.t;
-      ctx!.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx!.fillRect(Math.floor(x), Math.floor(y), 2, 2);
     }
 
-    for (const dot of dots) {
-      const p = dotPos(dot);
-      const breathe = 0.5 + Math.sin(elapsed * 1.4 + dot.phase) * 0.5;
-      const alpha = dot.hot ? 0.95 : 0.25 + breathe * 0.35;
-      ctx!.fillStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
-      const size = dot.hot ? 2 : 1;
-      ctx!.fillRect(Math.floor(p.x), Math.floor(p.y), size, size);
+    // location highlights
+    for (const city of CITIES) {
+      const breathe = 0.5 + Math.sin(elapsed * 1.6 + city.phase) * 0.5;
+      ctx!.fillStyle = `rgba(255,255,255,${(0.3 + breathe * 0.45).toFixed(3)})`;
+      const size = breathe > 0.75 ? 2 : 1;
+      ctx!.fillRect(Math.floor(city.x) - (size - 1) / 2, Math.floor(city.y) - (size - 1) / 2, size, size);
     }
 
     handle = requestAnimationFrame(frame);
