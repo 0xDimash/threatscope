@@ -42,22 +42,23 @@ export function renderMenu(root: HTMLElement, callbacks: MenuCallbacks): void {
   newButton.textContent = '+ New space';
   newButton.addEventListener('click', callbacks.onNewSpace);
 
+  topbar.append(newButton);
+
   const settingsButton = document.createElement('button');
-  settingsButton.className = 'menu-settings';
+  settingsButton.className = 'menu-settings-bottom';
   settingsButton.type = 'button';
   settingsButton.setAttribute('aria-label', 'Settings');
   settingsButton.innerHTML = `
-    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
       <circle cx="12" cy="12" r="3.2" fill="currentColor" />
       <path
         d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-1.7-1L15 3.5h-4l-.4 2.6a7.6 7.6 0 0 0-1.7 1l-2.3-1-2 3.4L6.6 11a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.6 7.6 0 0 0 1.7-1l2.3 1 2-3.4Z"
         fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"
       />
     </svg>
+    <span>Settings</span>
   `;
   settingsButton.addEventListener('click', callbacks.onSettings);
-
-  topbar.append(newButton, settingsButton);
 
   const list = document.createElement('div');
   list.className = 'menu-list';
@@ -69,7 +70,7 @@ export function renderMenu(root: HTMLElement, callbacks: MenuCallbacks): void {
 
   side.append(topbar, list);
   layout.append(brand, side);
-  root.append(layout);
+  root.append(layout, settingsButton);
 }
 
 export function showNewSpaceNotice(root: HTMLElement): void {
