@@ -1,10 +1,6 @@
 import './styles/scene.css';
 import './styles/menu.css';
-import inventory from '../../data/assets.json';
-import { fixtureEvents } from './data/contract-fixtures';
-import { createCityScene } from './scene';
-import { createOfficeScene } from './scene/office';
-import { parseInventory } from './scene/inventory';
+import { createNetworkScene } from './scene/network';
 import type { CityScene } from './scene/types';
 import { renderMenu, showNewSpaceNotice } from './ui/menu';
 import { SPACES } from './ui/spaces';
@@ -29,11 +25,7 @@ const modalRoot = requireElement<HTMLElement>('#modal-root', '#modal-root');
 type SceneFactory = (canvas: HTMLCanvasElement, options: { bloom: boolean; labels: boolean }) => CityScene;
 
 const FACTORIES: Record<string, SceneFactory> = {
-  city: (target, options) => {
-    const { assets, links } = parseInventory(inventory);
-    return createCityScene(target, { assets, links, bloom: options.bloom, labels: options.labels, events: fixtureEvents, eventIntervalMs: 1200 });
-  },
-  office: (target, options) => createOfficeScene(target, options),
+  network: (target, options) => createNetworkScene(target, options),
 };
 
 let active: CityScene | null = null;
