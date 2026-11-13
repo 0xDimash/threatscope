@@ -32,8 +32,8 @@ export function renderMenu(root: HTMLElement, callbacks: MenuCallbacks): void {
 
   const pixelMap = document.createElement('canvas');
   pixelMap.className = 'menu-pixelmap';
-  pixelMap.width = 160;
-  pixelMap.height = 80;
+  pixelMap.width = 240;
+  pixelMap.height = 120;
   brand.append(pixelMap);
   startPixelMap(pixelMap);
 
