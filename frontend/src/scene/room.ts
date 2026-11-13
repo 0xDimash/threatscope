@@ -64,7 +64,8 @@ function createWorldMap(): { canvas: HTMLCanvasElement; texture: CanvasTexture; 
     [101, 45, 10, 6], [60, 58, 30, 2],
   ];
 
-  const CELL = 2;
+  const CELL = 4;
+  const SIZE = CELL - 1;
   const COLS = W / CELL;
   const ROWS = H / CELL;
   const landGrid: boolean[] = new Array(COLS * ROWS).fill(false);
@@ -112,7 +113,7 @@ function createWorldMap(): { canvas: HTMLCanvasElement; texture: CanvasTexture; 
     for (let r = 0; r < ROWS; r += 1) {
       for (let c = 0; c < COLS; c += 1) {
         if (landGrid[r * COLS + c]) {
-          ctx!.fillRect(c * CELL, r * CELL, CELL, CELL);
+          ctx!.fillRect(c * CELL, r * CELL, SIZE, SIZE);
         }
       }
     }
@@ -139,7 +140,7 @@ function createWorldMap(): { canvas: HTMLCanvasElement; texture: CanvasTexture; 
         const tt = s / steps;
         const cx = Math.round((a.c + (b.c - a.c) * tt) * CELL);
         const cy = Math.round((a.r + (b.r - a.r) * tt) * CELL);
-        ctx!.fillRect(cx, cy, CELL, CELL);
+        ctx!.fillRect(cx, cy, SIZE, SIZE);
       }
       // bright head with trail
       for (let tr = 0; tr < 4; tr += 1) {
@@ -148,7 +149,7 @@ function createWorldMap(): { canvas: HTMLCanvasElement; texture: CanvasTexture; 
         const cx = Math.round((a.c + (b.c - a.c) * tt) * CELL);
         const cy = Math.round((a.r + (b.r - a.r) * tt) * CELL);
         ctx!.fillStyle = `rgba(255,255,255,${(0.85 - tr * 0.2).toFixed(2)})`;
-        ctx!.fillRect(cx, cy, CELL, CELL);
+        ctx!.fillRect(cx, cy, SIZE, SIZE);
       }
     }
 
