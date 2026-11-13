@@ -122,17 +122,37 @@ function startPixelMap(canvas: HTMLCanvasElement): void {
   // Continent ellipses in a 120x60 reference space.
   interface Blob { cx: number; cy: number; rx: number; ry: number; }
   const BLOBS: Blob[] = [
-    { cx: 28, cy: 22, rx: 17, ry: 12 },
-    { cx: 35, cy: 33, rx: 5, ry: 6 },
-    { cx: 40, cy: 10, rx: 6, ry: 5 },
-    { cx: 41, cy: 43, rx: 8, ry: 13 },
-    { cx: 61, cy: 18, rx: 8, ry: 7 },
-    { cx: 63, cy: 35, rx: 11, ry: 14 },
-    { cx: 88, cy: 20, rx: 24, ry: 12 },
-    { cx: 83, cy: 31, rx: 6, ry: 7 },
-    { cx: 95, cy: 33, rx: 7, ry: 5 },
-    { cx: 101, cy: 45, rx: 10, ry: 6 },
-    { cx: 60, cy: 58, rx: 30, ry: 2 },
+    // North America
+    { cx: 20, cy: 16, rx: 6, ry: 5 }, // Alaska
+    { cx: 28, cy: 22, rx: 16, ry: 11 },
+    { cx: 38, cy: 26, rx: 4, ry: 6 }, // Central America
+    { cx: 40, cy: 10, rx: 6, ry: 5 }, // Greenland
+    { cx: 24, cy: 30, rx: 2, ry: 2 }, // Florida
+    // South America
+    { cx: 40, cy: 42, rx: 7, ry: 12 },
+    { cx: 42, cy: 52, rx: 4, ry: 4 }, // southern taper
+    // Europe
+    { cx: 56, cy: 16, rx: 4, ry: 3 }, // UK
+    { cx: 60, cy: 12, rx: 3, ry: 6 }, // Scandinavia
+    { cx: 62, cy: 18, rx: 7, ry: 6 },
+    { cx: 66, cy: 20, rx: 2, ry: 3 }, // Italy
+    { cx: 58, cy: 22, rx: 2, ry: 2 }, // Iberia
+    // Africa
+    { cx: 62, cy: 30, rx: 9, ry: 12 },
+    { cx: 70, cy: 38, rx: 3, ry: 4 }, // horn
+    { cx: 58, cy: 42, rx: 3, ry: 3 }, // Madagascar
+    // Asia
+    { cx: 82, cy: 14, rx: 10, ry: 6 }, // Siberia
+    { cx: 88, cy: 22, rx: 18, ry: 10 },
+    { cx: 80, cy: 30, rx: 5, ry: 6 }, // India
+    { cx: 92, cy: 30, rx: 6, ry: 5 }, // SE Asia
+    { cx: 100, cy: 20, rx: 4, ry: 6 }, // Korea/Japan
+    { cx: 104, cy: 22, rx: 3, ry: 4 }, // Japan
+    // Australia
+    { cx: 100, cy: 44, rx: 9, ry: 6 },
+    { cx: 108, cy: 46, rx: 3, ry: 2 }, // New Zealand
+    // Antarctica
+    { cx: 60, cy: 58, rx: 32, ry: 2 },
   ];
 
   const inBlob = (gx: number, gy: number): boolean => {
@@ -166,6 +186,10 @@ function startPixelMap(canvas: HTMLCanvasElement): void {
     { c: 79, r: 22, phase: 2.8 },
     { c: 66, r: 42, phase: 4.9 },
     { c: 19, r: 17, phase: 3.0 },
+    { c: 75, r: 32, phase: 1.7 }, // Mumbai
+    { c: 62, r: 28, phase: 3.9 }, // Cairo
+    { c: 102, r: 16, phase: 5.6 }, // Seoul
+    { c: 42, r: 46, phase: 2.4 }, // Buenos Aires
   ].map((city) => ({
     c: Math.round((city.c / 120) * (COLS - 1)),
     r: Math.round((city.r / 60) * (ROWS - 1)),
