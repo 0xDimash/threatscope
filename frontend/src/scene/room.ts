@@ -2,6 +2,7 @@ import {
   AmbientLight,
   BoxGeometry,
   Clock,
+  CanvasTexture,
   Color,
   DirectionalLight,
   Group,
@@ -10,6 +11,7 @@ import {
   PerspectiveCamera,
   Raycaster,
   Scene,
+  SRGBColorSpace,
   TorusGeometry,
   Vector2,
   Vector3,
@@ -40,6 +42,48 @@ const DEVICES: Device[] = [
 ];
 
 const ROOM = { w: 12, d: 10, h: 5 };
+
+function createWorldMapTexture(): CanvasTexture {
+  const W = 64;
+  const H = 32;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, W, H);
+
+    const sx = W / 120;
+    const sy = H / 60;
+    const blob = (cx: number, cy: number, rx: number, ry: number): void => {
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(cx * sx, cy * sy, rx * sx, ry * sy, 0, 0, Math.PI * 2);
+      ctx.fill();
+    };
+    blob(28, 22, 17, 12);
+    blob(35, 33, 5, 6);
+    blob(40, 10, 6, 5);
+    blob(41, 43, 8, 13);
+    blob(61, 18, 8, 7);
+    blob(63, 35, 11, 14);
+    blob(88, 20, 24, 12);
+    blob(83, 31, 6, 7);
+    blob(95, 33, 7, 5);
+    blob(101, 45, 10, 6);
+    blob(60, 58, 30, 2);
+
+    // dim the land to keep it subtle inside the torus
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.fillStyle = 'rgba(0,0,0,0.88)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  return texture;
+}
 
 export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: boolean; labels?: boolean; pixelRatio?: number; events?: readonly SecurityEvent[]; eventIntervalMs?: number } = {}): CityScene {
   const scene = new Scene();
@@ -141,13 +185,25 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   }
 
   // external origin marker (where attacks come from)
-  const uplink = new Mesh(
-    new TorusGeometry(0.5, 0.12, 8, 24),
+  // external origin marker: torus frame enclosing a pixel world map
+  const uplinkGroup = new Group();
+  uplinkGroup.position.set(0, 5.2, -6.0);
+
+  const uplinkRing = new Mesh(
+    new TorusGeometry(0.6, 0.08, 8, 32),
     new MeshBasicMaterial({ color: 0xffffff }),
   );
-  uplink.position.set(0, 5.2, -6.0);
-  uplink.rotation.x = Math.PI / 2;
-  devicesGroup.add(uplink);
+  uplinkGroup.add(uplinkRing);
+
+  const mapTexture = createWorldMapTexture();
+  const mapPlane = new Mesh(
+    new BoxGeometry(1.05, 0.01, 1.05),
+    new MeshBasicMaterial({ map: mapTexture, transparent: true, opacity: 0.85 }),
+  );
+  mapPlane.rotation.x = Math.PI / 2;
+  uplinkGroup.add(mapPlane);
+
+  devicesGroup.add(uplinkGroup);
 
   const arcs = createRoomArcsLayer({
     scene,
