@@ -1,6 +1,7 @@
 import './styles/scene.css';
 import './styles/menu.css';
 import inventory from '../../data/assets.json';
+import { fixtureEvents } from './data/contract-fixtures';
 import { createCityScene } from './scene';
 import { createOfficeScene } from './scene/office';
 import { parseInventory } from './scene/inventory';
@@ -30,7 +31,7 @@ type SceneFactory = (canvas: HTMLCanvasElement, options: { bloom: boolean; label
 const FACTORIES: Record<string, SceneFactory> = {
   city: (target, options) => {
     const { assets, links } = parseInventory(inventory);
-    return createCityScene(target, { assets, links, bloom: options.bloom, labels: options.labels });
+    return createCityScene(target, { assets, links, bloom: options.bloom, labels: options.labels, events: fixtureEvents, eventIntervalMs: 1200 });
   },
   office: (target, options) => createOfficeScene(target, options),
 };
