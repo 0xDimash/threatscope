@@ -123,34 +123,43 @@ function startPixelMap(canvas: HTMLCanvasElement): void {
   interface Blob { cx: number; cy: number; rx: number; ry: number; }
   const BLOBS: Blob[] = [
     // North America
-    { cx: 20, cy: 16, rx: 6, ry: 5 }, // Alaska
-    { cx: 28, cy: 22, rx: 16, ry: 11 },
-    { cx: 38, cy: 26, rx: 4, ry: 6 }, // Central America
-    { cx: 40, cy: 10, rx: 6, ry: 5 }, // Greenland
-    { cx: 24, cy: 30, rx: 2, ry: 2 }, // Florida
+    { cx: 18, cy: 14, rx: 5, ry: 4 }, // Alaska
+    { cx: 24, cy: 19, rx: 7, ry: 6 }, // Canada
+    { cx: 26, cy: 26, rx: 6, ry: 4 }, // US
+    { cx: 27, cy: 29, rx: 2, ry: 2 }, // Florida
+    { cx: 29, cy: 29, rx: 3, ry: 3 }, // Mexico
+    { cx: 31, cy: 31, rx: 3, ry: 4 }, // Central America
+    { cx: 40, cy: 10, rx: 5, ry: 4 }, // Greenland
     // South America
-    { cx: 40, cy: 42, rx: 7, ry: 12 },
-    { cx: 42, cy: 52, rx: 4, ry: 4 }, // southern taper
+    { cx: 38, cy: 40, rx: 5, ry: 9 },
+    { cx: 40, cy: 50, rx: 3, ry: 4 },
+    { cx: 38, cy: 55, rx: 2, ry: 2 },
     // Europe
-    { cx: 56, cy: 16, rx: 4, ry: 3 }, // UK
-    { cx: 60, cy: 12, rx: 3, ry: 6 }, // Scandinavia
-    { cx: 62, cy: 18, rx: 7, ry: 6 },
-    { cx: 66, cy: 20, rx: 2, ry: 3 }, // Italy
-    { cx: 58, cy: 22, rx: 2, ry: 2 }, // Iberia
+    { cx: 56, cy: 16, rx: 3, ry: 3 }, // UK
+    { cx: 60, cy: 11, rx: 3, ry: 5 }, // Scandinavia
+    { cx: 60, cy: 18, rx: 5, ry: 5 }, // mainland
+    { cx: 63, cy: 20, rx: 2, ry: 3 }, // Italy
+    { cx: 56, cy: 22, rx: 3, ry: 3 }, // Iberia
     // Africa
-    { cx: 62, cy: 30, rx: 9, ry: 12 },
-    { cx: 70, cy: 38, rx: 3, ry: 4 }, // horn
-    { cx: 58, cy: 42, rx: 3, ry: 3 }, // Madagascar
+    { cx: 60, cy: 30, rx: 7, ry: 9 },
+    { cx: 62, cy: 40, rx: 5, ry: 5 },
+    { cx: 66, cy: 44, rx: 3, ry: 3 },
+    { cx: 68, cy: 30, rx: 2, ry: 3 }, // horn
+    { cx: 58, cy: 44, rx: 2, ry: 2 }, // Madagascar
     // Asia
-    { cx: 82, cy: 14, rx: 10, ry: 6 }, // Siberia
-    { cx: 88, cy: 22, rx: 18, ry: 10 },
-    { cx: 80, cy: 30, rx: 5, ry: 6 }, // India
-    { cx: 92, cy: 30, rx: 6, ry: 5 }, // SE Asia
-    { cx: 100, cy: 20, rx: 4, ry: 6 }, // Korea/Japan
-    { cx: 104, cy: 22, rx: 3, ry: 4 }, // Japan
+    { cx: 76, cy: 12, rx: 10, ry: 5 }, // Siberia
+    { cx: 80, cy: 10, rx: 7, ry: 3 },
+    { cx: 82, cy: 20, rx: 10, ry: 5 }, // China
+    { cx: 90, cy: 18, rx: 5, ry: 4 },
+    { cx: 76, cy: 28, rx: 4, ry: 5 }, // India
+    { cx: 86, cy: 30, rx: 5, ry: 4 }, // SE Asia
+    { cx: 90, cy: 34, rx: 3, ry: 3 },
+    { cx: 98, cy: 20, rx: 3, ry: 5 }, // Korea/Japan
+    { cx: 102, cy: 22, rx: 2, ry: 3 }, // Japan
     // Australia
-    { cx: 100, cy: 44, rx: 9, ry: 6 },
-    { cx: 108, cy: 46, rx: 3, ry: 2 }, // New Zealand
+    { cx: 100, cy: 42, rx: 7, ry: 4 },
+    { cx: 98, cy: 46, rx: 3, ry: 2 },
+    { cx: 106, cy: 44, rx: 2, ry: 2 }, // New Zealand
     // Antarctica
     { cx: 60, cy: 58, rx: 32, ry: 2 },
   ];
