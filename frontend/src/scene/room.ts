@@ -130,7 +130,7 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
 
     positions.set(dev.id, box.position.clone());
 
-    const label = labels.create(dev.name, '#ffffff', 3.2, 0.6);
+    const label = labels.create(dev.name, '#000000', 3.2, 0.6);
     if (label) {
       label.position.set(dev.pos.x, dev.pos.y + dev.size.y + 0.6, dev.pos.z);
       devicesGroup.add(label);
