@@ -6,6 +6,7 @@ import {
   Color,
   DirectionalLight,
   Group,
+  LinearFilter,
   Mesh,
   MeshBasicMaterial,
   PerspectiveCamera,
@@ -56,8 +57,8 @@ function createWorldMapTexture(): CanvasTexture {
 
     const sx = W / 120;
     const sy = H / 60;
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
     const blob = (cx: number, cy: number, rx: number, ry: number): void => {
-      ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.ellipse(cx * sx, cy * sy, rx * sx, ry * sy, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -73,15 +74,11 @@ function createWorldMapTexture(): CanvasTexture {
     blob(95, 33, 7, 5);
     blob(101, 45, 10, 6);
     blob(60, 58, 30, 2);
-
-    // dim the land to keep it subtle inside the torus
-    ctx.globalCompositeOperation = 'source-atop';
-    ctx.fillStyle = 'rgba(0,0,0,0.88)';
-    ctx.fillRect(0, 0, W, H);
-    ctx.globalCompositeOperation = 'source-over';
   }
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
+  texture.minFilter = LinearFilter;
+  texture.magFilter = LinearFilter;
   return texture;
 }
 
@@ -190,17 +187,17 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   uplinkGroup.position.set(0, 5.2, -6.0);
 
   const uplinkRing = new Mesh(
-    new TorusGeometry(0.6, 0.08, 8, 32),
+    new TorusGeometry(0.55, 0.06, 8, 32),
     new MeshBasicMaterial({ color: 0xffffff }),
   );
+  uplinkRing.rotation.x = Math.PI / 2;
   uplinkGroup.add(uplinkRing);
 
   const mapTexture = createWorldMapTexture();
   const mapPlane = new Mesh(
-    new BoxGeometry(1.05, 0.01, 1.05),
-    new MeshBasicMaterial({ map: mapTexture, transparent: true, opacity: 0.85 }),
+    new BoxGeometry(0.9, 0.01, 0.9),
+    new MeshBasicMaterial({ map: mapTexture, transparent: true, opacity: 1.0 }),
   );
-  mapPlane.rotation.x = Math.PI / 2;
   uplinkGroup.add(mapPlane);
 
   devicesGroup.add(uplinkGroup);
