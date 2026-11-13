@@ -10,6 +10,7 @@ import {
   PerspectiveCamera,
   Raycaster,
   Scene,
+  TorusGeometry,
   Vector2,
   Vector3,
 } from 'three';
@@ -141,10 +142,11 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
 
   // external origin marker (where attacks come from)
   const uplink = new Mesh(
-    new BoxGeometry(0.5, 0.5, 0.5),
+    new TorusGeometry(0.5, 0.12, 8, 24),
     new MeshBasicMaterial({ color: 0xffffff }),
   );
   uplink.position.set(0, 5.2, -6.0);
+  uplink.rotation.x = Math.PI / 2;
   devicesGroup.add(uplink);
 
   const arcs = createRoomArcsLayer({
