@@ -21,3 +21,17 @@ body {
   inset: 0;
   pointer-events: none;
 }
+
+.room-label {
+  position: fixed;
+  top: 0;
+  left: 0;
+  color: #ffffff;
+  mix-blend-mode: difference;
+  font-family: 'SF Mono', Consolas, Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: none;
+}

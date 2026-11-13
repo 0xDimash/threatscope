@@ -15,7 +15,6 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { createRenderContext, createRenderer, type RenderContext } from './renderer';
-import { LabelFactory } from './labels';
 import type { CityScene, SceneStats } from './types';
 
 interface Device {
@@ -101,8 +100,6 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
 
   scene.add(roomGroup);
 
-  const labels = new LabelFactory(options.labels ?? true);
-
   const devicesGroup = new Group();
   devicesGroup.name = 'devices';
   scene.add(devicesGroup);
@@ -120,7 +117,6 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     clickables.push(box);
     devicesGroup.add(box);
 
-    // wireframe edges for contrast
     const edges = new Mesh(
       new BoxGeometry(dev.size.x + 0.02, dev.size.y + 0.02, dev.size.z + 0.02),
       new MeshBasicMaterial({ color: 0x000000, wireframe: true }),
@@ -129,11 +125,17 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     devicesGroup.add(edges);
 
     positions.set(dev.id, box.position.clone());
+  }
 
-    const label = labels.create(dev.name, '#ffffff', 3.2, 0.6);
-    if (label) {
-      label.position.set(dev.pos.x, dev.pos.y + dev.size.y + 0.6, dev.pos.z);
-      devicesGroup.add(label);
+  const labelsHost = document.querySelector<HTMLElement>('#hud');
+  const labelElements: HTMLElement[] = [];
+  if (options.labels ?? true) {
+    for (const dev of DEVICES) {
+      const el = document.createElement('div');
+      el.className = 'room-label';
+      el.textContent = dev.name;
+      labelsHost?.appendChild(el);
+      labelElements.push(el);
     }
   }
 
@@ -163,6 +165,21 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     const delta = Math.min(0.05, clock.getDelta());
     elapsed += delta;
     controls.update();
+    // project DOM labels
+    for (let i = 0; i < labelElements.length; i += 1) {
+      const dev = DEVICES[i];
+      const el = labelElements[i];
+      const v = new Vector3(dev.pos.x, dev.pos.y + dev.size.y + 0.6, dev.pos.z);
+      v.project(camera);
+      if (v.z > 1) {
+        el.style.display = 'none';
+        continue;
+      }
+      el.style.display = '';
+      const x = (v.x * 0.5 + 0.5) * canvas.clientWidth;
+      const y = (-v.y * 0.5 + 0.5) * canvas.clientHeight;
+      el.style.transform = `translate(-50%, -100%) translate(${x}px, ${y}px)`;
+    }
     renderer.info.reset();
     renderContext.render();
     frameTimes.push(delta * 1000);
@@ -198,7 +215,7 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
       window.removeEventListener('resize', resize);
       observer?.disconnect();
       controls.dispose();
-      labels.dispose();
+      labelsHost?.querySelectorAll('.room-label').forEach((el) => el.remove());
       renderContext.dispose();
     },
     resize,
