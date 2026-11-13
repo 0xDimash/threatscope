@@ -65,8 +65,8 @@ const OFFICE_ASSETS: readonly Asset[] = [
   { id: 'office-uplink', name: 'Internet Uplink', kind: 'external', criticality: 3, district: 'Above', position: { x: 0, y: 8.4, z: -4 }, tags: ['wan'] },
 ];
 
-const LINK_COLOR = new Color(0x2f81f7);
-const UPLINK_COLOR = new Color(0xff2d55);
+const LINK_COLOR = new Color(0xffffff);
+const UPLINK_COLOR = new Color(0xffffff);
 
 const LINKS: readonly Link[] = [
   { source: 'office-router', target: 'office-uplink', kind: 'network' },
@@ -96,7 +96,7 @@ const WALL_H = 6.2;
 
 export function createOfficeScene(canvas: HTMLCanvasElement, options: OfficeSceneOptions = {}): CityScene {
   const scene = new Scene();
-  scene.background = new Color(0x03060d);
+  scene.background = new Color(0x000000);
   const renderer = createRenderer(canvas, { pixelRatio: options.pixelRatio });
   renderer.info.autoReset = false;
 
@@ -295,7 +295,7 @@ function buildRoom(
   const grid = new Mesh(
     trackGeometry(new PlaneGeometry(ROOM_W, ROOM_D)),
     trackMaterial(
-      new MeshBasicMaterial({ color: 0x2f81f7, transparent: true, opacity: 0.05, blending: AdditiveBlending, depthWrite: false }),
+      new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.05, blending: AdditiveBlending, depthWrite: false }),
     ),
   );
   grid.rotation.x = -Math.PI / 2;
@@ -330,8 +330,8 @@ function buildRoom(
     trackGeometry(new PlaneGeometry(ROOM_W * 0.6, WALL_H * 0.6)),
     trackMaterial(
       new MeshStandardMaterial({
-        color: 0x123a63,
-        emissive: 0x1a4d7f,
+        color: 0x333333,
+        emissive: 0x555555,
         emissiveIntensity: 0.5,
         roughness: 0.2,
         metalness: 0.6,
@@ -431,7 +431,7 @@ function buildServerRack(node: Group, build: DeviceBuild): void {
   clickable(node, body, 'office-rack');
 
   const ledMaterial = build.trackMaterial(
-    new MeshStandardMaterial({ color: 0x19b3ff, emissive: 0x19b3ff, emissiveIntensity: 1.6 }),
+    new MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1.6 }),
   );
   const ledGeometry = build.trackGeometry(new BoxGeometry(1.5, 0.06, 0.04));
   for (let i = 0; i < 9; i += 1) {
@@ -448,7 +448,7 @@ function buildServerRack(node: Group, build: DeviceBuild): void {
 function buildNas(node: Group, build: DeviceBuild): void {
   const body = new Mesh(
     build.trackGeometry(new BoxGeometry(1.8, 1.1, 1.2)),
-    build.trackMaterial(new MeshStandardMaterial({ color: 0x241536, roughness: 0.45, metalness: 0.55, emissive: 0x8a2be2, emissiveIntensity: 0.25 })),
+    build.trackMaterial(new MeshStandardMaterial({ color: 0x241536, roughness: 0.45, metalness: 0.55, emissive: 0xffffff, emissiveIntensity: 0.25 })),
   );
   body.position.y = 0.55;
   clickable(node, body, 'office-nas');
@@ -464,7 +464,7 @@ function buildRouter(node: Group, build: DeviceBuild, id: string): void {
 
   const body = new Mesh(
     build.trackGeometry(new BoxGeometry(1.5, 0.4, 1.5)),
-    build.trackMaterial(new MeshStandardMaterial({ color: 0x0f2038, roughness: 0.4, metalness: 0.6, emissive: 0x2f81f7, emissiveIntensity: 0.35 })),
+    build.trackMaterial(new MeshStandardMaterial({ color: 0x0f2038, roughness: 0.4, metalness: 0.6, emissive: 0xffffff, emissiveIntensity: 0.35 })),
   );
   body.position.y = 1.4;
   clickable(node, body, id);
@@ -472,7 +472,7 @@ function buildRouter(node: Group, build: DeviceBuild, id: string): void {
   for (const dx of [-0.45, 0.45]) {
     const antenna = new Mesh(
       build.trackGeometry(new CylinderGeometry(0.035, 0.05, 0.8, 8)),
-      build.trackMaterial(new MeshStandardMaterial({ color: 0x9fc3e8, roughness: 0.35, metalness: 0.7 })),
+      build.trackMaterial(new MeshStandardMaterial({ color: 0xcccccc, roughness: 0.35, metalness: 0.7 })),
     );
     antenna.position.set(dx, 2, 0);
     antenna.rotation.z = dx > 0 ? 0.16 : -0.16;
@@ -481,7 +481,7 @@ function buildRouter(node: Group, build: DeviceBuild, id: string): void {
 
   const ring = new Mesh(
     build.trackGeometry(new TorusGeometry(1.05, 0.035, 8, 48)),
-    build.trackMaterial(new MeshBasicMaterial({ color: 0x2f81f7, transparent: true, opacity: 0.5 })),
+    build.trackMaterial(new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 })),
   );
   ring.rotation.x = Math.PI / 2;
   ring.position.y = 1.42;
@@ -511,7 +511,7 @@ function buildCamera(node: Group, build: DeviceBuild): void {
 
   const lens = new Mesh(
     build.trackGeometry(new SphereGeometry(0.09, 12, 12)),
-    build.trackMaterial(new MeshStandardMaterial({ color: 0xff8c42, emissive: 0xff8c42, emissiveIntensity: 1.4 })),
+    build.trackMaterial(new MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1.4 })),
   );
   lens.position.set(0, -0.22, 0.24);
   node.add(lens);
@@ -525,7 +525,7 @@ function buildCamera(node: Group, build: DeviceBuild): void {
 function buildUplink(node: Group, build: DeviceBuild): void {
   const core = new Mesh(
     build.trackGeometry(new ConeGeometry(0.7, 1.5, 4)),
-    build.trackMaterial(new MeshStandardMaterial({ color: 0xff2d55, emissive: 0xff2d55, emissiveIntensity: 0.9, roughness: 0.3, metalness: 0.6 })),
+    build.trackMaterial(new MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.9, roughness: 0.3, metalness: 0.6 })),
   );
   core.position.y = 0.6;
   core.rotation.x = Math.PI;
@@ -598,7 +598,7 @@ function buildWorkstation(node: Group, build: DeviceBuild, asset: Asset): void {
   const panel = new Mesh(
     build.trackGeometry(new PlaneGeometry(1.7, 0.9)),
     build.trackMaterial(
-      new MeshStandardMaterial({ color: 0x4fd1ff, emissive: 0x4fd1ff, emissiveIntensity: 0.55, roughness: 0.2, transparent: true, opacity: 0.85 }),
+      new MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.55, roughness: 0.2, transparent: true, opacity: 0.85 }),
     ),
   );
   panel.position.set(0.25, 1.95, -0.34);
@@ -621,7 +621,7 @@ function buildIotBox(node: Group, build: DeviceBuild, asset: Asset): void {
 
   const dot = new Mesh(
     build.trackGeometry(new SphereGeometry(0.05, 10, 10)),
-    build.trackMaterial(new MeshStandardMaterial({ color: 0x4fd1ff, emissive: 0x4fd1ff, emissiveIntensity: 1.2 })),
+    build.trackMaterial(new MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 1.2 })),
   );
   dot.position.set(0.25, 0.3, 0.3);
   node.add(dot);
