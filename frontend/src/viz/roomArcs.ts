@@ -39,7 +39,7 @@ const STYLES: Record<Severity, ArcStyle> = {
 };
 
 const LIFETIME = 2.6;
-const EXTERNAL_ORIGIN = new Vector3(0, 4.6, -6.2);
+const EXTERNAL_ORIGIN = new Vector3(0, 4.6, -4.0);
 
 interface ActiveArc {
   line: Line2;

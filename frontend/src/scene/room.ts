@@ -76,7 +76,7 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   floor.position.y = -0.05;
   roomGroup.add(floor);
 
-  const wallMat = new MeshBasicMaterial({ color: 0x0a0a0a, transparent: true, opacity: 0.6 });
+  const wallMat = new MeshBasicMaterial({ color: 0x0a0a0a, transparent: true, opacity: 0.35, depthWrite: false });
   const back = new Mesh(new BoxGeometry(ROOM.w, ROOM.h, 0.1), wallMat);
   back.position.set(0, ROOM.h / 2, -ROOM.d / 2);
   roomGroup.add(back);
@@ -146,6 +146,21 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     viewportHeight: canvas.clientHeight,
   });
 
+  // initial arc so the space isn't empty on load
+  arcs.spawn({
+    id: 'room-evt-0',
+    ts: new Date().toISOString(),
+    type: 'anomaly',
+    severity: 'high',
+    src: { ip: '203.0.113.9', host: null, asset_id: null },
+    dst: { ip: '10.0.0.1', host: 'Server Rack', asset_id: 'room-rack' },
+    description: null,
+    mitre: null,
+    risk_delta: 2.0,
+    raw_source: 'demo',
+    meta: {},
+  });
+
   const renderContext: RenderContext = createRenderContext(renderer, scene, camera, {
     bloom: false,
   });
@@ -192,10 +207,25 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   resize();
 
   const demoEvents = options.events ?? [];
-  if (demoEvents.length > 0) {
+  const severities: SecurityEvent['severity'][] = ['critical', 'high', 'medium', 'low', 'info'];
+  if (demoEvents.length > 0 || true) {
     let index = 0;
     eventTimer = window.setInterval(() => {
-      arcs.spawn(demoEvents[index % demoEvents.length]);
+      const dev = DEVICES[Math.floor(Math.random() * DEVICES.length)];
+      const evt: SecurityEvent = {
+        id: `room-evt-${index}`,
+        ts: new Date().toISOString(),
+        type: 'anomaly',
+        severity: severities[index % severities.length],
+        src: { ip: '203.0.113.9', host: null, asset_id: null },
+        dst: { ip: '10.0.0.1', host: dev.name, asset_id: dev.id },
+        description: null,
+        mitre: null,
+        risk_delta: 2.0,
+        raw_source: 'demo',
+        meta: {},
+      };
+      arcs.spawn(evt);
       index += 1;
     }, options.eventIntervalMs ?? 1300);
   }
