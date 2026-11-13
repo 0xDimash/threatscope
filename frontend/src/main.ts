@@ -1,6 +1,6 @@
 import './styles/scene.css';
 import './styles/menu.css';
-import { createNetworkScene } from './scene/network';
+import { createRoomScene } from './scene/room';
 import type { CityScene } from './scene/types';
 import { renderMenu, showNewSpaceNotice } from './ui/menu';
 import { SPACES } from './ui/spaces';
@@ -25,7 +25,7 @@ const modalRoot = requireElement<HTMLElement>('#modal-root', '#modal-root');
 type SceneFactory = (canvas: HTMLCanvasElement, options: { bloom: boolean; labels: boolean }) => CityScene;
 
 const FACTORIES: Record<string, SceneFactory> = {
-  network: (target, options) => createNetworkScene(target, options),
+  room: (target, options) => createRoomScene(target, options),
 };
 
 let active: CityScene | null = null;

@@ -10,10 +10,10 @@ export interface SpaceDef {
 
 export const SPACES: readonly SpaceDef[] = [
   {
-    id: 'network',
-    title: 'Minimal Network',
-    tagline: 'Packet-Tracer-style view of a small network',
-    meta: '11 devices · 10 links · pixel grid',
+    id: 'room',
+    title: 'Minimal Room',
+    tagline: '3D room with stacked devices',
+    meta: '8 devices · vertical tracking',
     badge: 'New',
     accent: '#ffffff',
     available: true,
