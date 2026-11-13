@@ -15,8 +15,10 @@ import {
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { createRenderContext, createRenderer, type RenderContext } from './renderer';
+import { createRoomArcsLayer } from '../viz/roomArcs';
 import { LabelFactory } from './labels';
 import type { CityScene, SceneStats } from './types';
+import type { SecurityEvent } from '../types/contract';
 
 interface Device {
   id: string;
@@ -38,7 +40,7 @@ const DEVICES: Device[] = [
 
 const ROOM = { w: 12, d: 10, h: 5 };
 
-export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: boolean; labels?: boolean; pixelRatio?: number } = {}): CityScene {
+export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: boolean; labels?: boolean; pixelRatio?: number; events?: readonly SecurityEvent[]; eventIntervalMs?: number } = {}): CityScene {
   const scene = new Scene();
   scene.background = new Color(0x000000);
 
@@ -137,6 +139,13 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     }
   }
 
+  const arcs = createRoomArcsLayer({
+    scene,
+    devicePositions: positions,
+    viewportWidth: canvas.clientWidth,
+    viewportHeight: canvas.clientHeight,
+  });
+
   const renderContext: RenderContext = createRenderContext(renderer, scene, camera, {
     bloom: false,
   });
@@ -146,6 +155,7 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   let raf = 0;
   let running = false;
   let elapsed = 0;
+  let eventTimer = 0;
 
   function viewportSize(): { width: number; height: number } {
     const rect = canvas.getBoundingClientRect();
@@ -157,12 +167,14 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     camera.aspect = height > 0 ? width / height : 1;
     camera.updateProjectionMatrix();
     renderContext.setSize(width, height);
+    arcs.resize(width, height);
   }
 
   function render(): void {
     const delta = Math.min(0.05, clock.getDelta());
     elapsed += delta;
     controls.update();
+    arcs.update(elapsed, delta);
     renderer.info.reset();
     renderContext.render();
     frameTimes.push(delta * 1000);
@@ -178,6 +190,15 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   observer?.observe(canvas);
   window.addEventListener('resize', resize);
   resize();
+
+  const demoEvents = options.events ?? [];
+  if (demoEvents.length > 0) {
+    let index = 0;
+    eventTimer = window.setInterval(() => {
+      arcs.spawn(demoEvents[index % demoEvents.length]);
+      index += 1;
+    }, options.eventIntervalMs ?? 1300);
+  }
 
   const sceneApi: CityScene = {
     assetIds: DEVICES.map((d) => d.id),
@@ -197,8 +218,10 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
       sceneApi.stop();
       window.removeEventListener('resize', resize);
       observer?.disconnect();
+      if (eventTimer) window.clearInterval(eventTimer);
       controls.dispose();
       labels.dispose();
+      arcs.dispose();
       renderContext.dispose();
     },
     resize,
@@ -239,8 +262,8 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
       camera.position.copy(target).add(new Vector3(4, 3, 4));
       controls.update();
     },
-    spawnArc(): void {
-      // no-op for now
+    spawnArc(event: SecurityEvent): void {
+      arcs.spawn(event);
     },
   };
 
