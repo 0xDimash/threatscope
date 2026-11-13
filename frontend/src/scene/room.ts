@@ -55,25 +55,33 @@ function createWorldMapTexture(): CanvasTexture {
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, W, H);
 
-    const sx = W / 120;
-    const sy = H / 60;
-    ctx.fillStyle = 'rgba(255,255,255,0.75)';
-    const blob = (cx: number, cy: number, rx: number, ry: number): void => {
-      ctx.beginPath();
-      ctx.ellipse(cx * sx, cy * sy, rx * sx, ry * sy, 0, 0, Math.PI * 2);
-      ctx.fill();
-    };
-    blob(28, 22, 17, 12);
-    blob(35, 33, 5, 6);
-    blob(40, 10, 6, 5);
-    blob(41, 43, 8, 13);
-    blob(61, 18, 8, 7);
-    blob(63, 35, 11, 14);
-    blob(88, 20, 24, 12);
-    blob(83, 31, 6, 7);
-    blob(95, 33, 7, 5);
-    blob(101, 45, 10, 6);
-    blob(60, 58, 30, 2);
+    // continent ellipses in 120x60 space
+    const blobs: Array<[number, number, number, number]> = [
+      [28, 22, 17, 12], [35, 33, 5, 6], [40, 10, 6, 5],
+      [41, 43, 8, 13], [61, 18, 8, 7], [63, 35, 11, 14],
+      [88, 20, 24, 12], [83, 31, 6, 7], [95, 33, 7, 5],
+      [101, 45, 10, 6], [60, 58, 30, 2],
+    ];
+
+    const CELL = 2;
+    const COLS = W / CELL;
+    const ROWS = H / CELL;
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    for (let r = 0; r < ROWS; r += 1) {
+      for (let c = 0; c < COLS; c += 1) {
+        const rx = (c + 0.5) / COLS * 120;
+        const ry = (r + 0.5) / ROWS * 60;
+        let land = false;
+        for (const [cx, cy, erx, ery] of blobs) {
+          const dx = (rx - cx) / erx;
+          const dy = (ry - cy) / ery;
+          if (dx * dx + dy * dy <= 1) { land = true; break; }
+        }
+        if (land) {
+          ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
+        }
+      }
+    }
   }
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
