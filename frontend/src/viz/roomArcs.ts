@@ -75,9 +75,7 @@ export function createRoomArcsLayer(options: {
   function sourcePosition(event: SecurityEvent): Vector3 {
     const id = event.src.asset_id;
     if (id && devicePositions.has(id)) return devicePositions.get(id)!.clone();
-    return EXTERNAL_ORIGIN.clone().add(
-      new Vector3((Math.random() - 0.5) * 1.6, Math.random() * 0.6, (Math.random() - 0.5) * 1.6),
-    );
+    return EXTERNAL_ORIGIN.clone();
   }
 
   function spawn(event: SecurityEvent): void {
