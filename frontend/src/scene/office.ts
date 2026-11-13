@@ -149,7 +149,7 @@ export function createOfficeScene(canvas: HTMLCanvasElement, options: OfficeScen
   scene.add(network.group);
 
   const renderContext: RenderContext = createRenderContext(renderer, scene, camera, {
-    bloom: options.bloom ?? true,
+    bloom: options.bloom ?? false,
     bloomStrength: 0.42,
   });
 

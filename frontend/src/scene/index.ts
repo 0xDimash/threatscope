@@ -6,8 +6,6 @@ import {
   Vector3,
   type Group,
   type Mesh,
-  type ShaderMaterial,
-  type SpriteMaterial,
 } from 'three';
 import { createAssetMeshes, type AssetNode } from './assetMeshes';
 import { createArcsLayer } from '../viz/arcs';
@@ -27,8 +25,6 @@ import type { SecurityEvent } from '../types/contract';
 
 interface AnimatedNode {
   group: Group;
-  uTime: { value: number };
-  glow: SpriteMaterial;
   halo: Mesh;
   spin: number;
   phase: number;
@@ -74,14 +70,12 @@ export function createCityScene(canvas: HTMLCanvasElement, options: SceneOptions
     viewportHeight: canvas.clientHeight,
   });
 
-  const renderContext = createRenderContext(renderer, scene, rig.camera, { bloom: options.bloom });
+  const renderContext = createRenderContext(renderer, scene, rig.camera, { bloom: options.bloom ?? false });
 
   const animated: AnimatedNode[] = [];
   assets.nodes.forEach((node: AssetNode) => {
     animated.push({
       group: node.group,
-      uTime: (node.shell.material as ShaderMaterial).uniforms.uTime as { value: number },
-      glow: node.glow.material as SpriteMaterial,
       halo: node.halo,
       spin: node.kind === 'external' ? 0.55 : 0.12,
       phase: node.group.position.z,
@@ -121,9 +115,7 @@ export function createCityScene(canvas: HTMLCanvasElement, options: SceneOptions
 
     for (const node of animated) {
       node.group.rotation.y += delta * node.spin;
-      node.uTime.value = elapsed;
       node.halo.rotation.z += delta * 0.35;
-      node.glow.opacity = 0.17 + Math.sin(elapsed * 2 + node.phase) * 0.04;
     }
 
     arcs.update(elapsed, delta);

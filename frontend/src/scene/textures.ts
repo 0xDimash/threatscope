@@ -37,7 +37,7 @@ export function createLabelTexture(text: string, color: string): CanvasTexture {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.shadowColor = color;
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = 0;
     ctx.fillStyle = color;
     ctx.fillText(text, 512, 96);
   }
