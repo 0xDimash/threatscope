@@ -3,6 +3,7 @@ import {
   Group,
   Mesh,
   MeshBasicMaterial,
+  QuadraticBezierCurve3,
   Vector2,
   Vector3,
   type Scene,
@@ -39,15 +40,14 @@ const STYLES: Record<Severity, ArcStyle> = {
 };
 
 const LIFETIME = 2.6;
-const EXTERNAL_ORIGIN = new Vector3(0, 4.6, -4.0);
+const EXTERNAL_ORIGIN = new Vector3(0, 5.2, -6.0);
 
 interface ActiveArc {
   line: Line2;
   geometry: LineGeometry;
   material: LineMaterial;
   packet: Mesh;
-  start: Vector3;
-  end: Vector3;
+  curve: QuadraticBezierCurve3;
   style: ArcStyle;
   age: number;
 }
@@ -86,8 +86,17 @@ export function createRoomArcsLayer(options: {
     const start = sourcePosition(event);
     const style = STYLES[event.severity] ?? STYLES.info;
 
+    const mid = new Vector3().addVectors(start, end).multiplyScalar(0.5);
+    const distance = start.distanceTo(end);
+    mid.y += distance * 0.35 + 1.2;
+
+    const curve = new QuadraticBezierCurve3(start, mid, end);
+    const sampled = curve.getPoints(28);
+    const positionsArray: number[] = [];
+    for (const p of sampled) positionsArray.push(p.x, p.y, p.z);
+
     const geometry = new LineGeometry();
-    geometry.setPositions([start.x, start.y, start.z, end.x, end.y, end.z]);
+    geometry.setPositions(positionsArray);
 
     const material = new LineMaterial({
       color: 0xffffff,
@@ -112,7 +121,7 @@ export function createRoomArcsLayer(options: {
     packet.position.copy(start);
     group.add(packet);
 
-    arcs.push({ line, geometry, material, packet, start, end, style, age: 0 });
+    arcs.push({ line, geometry, material, packet, curve, style, age: 0 });
   }
 
   function update(_elapsed: number, delta: number): void {
@@ -127,7 +136,7 @@ export function createRoomArcsLayer(options: {
       arc.material.opacity = Math.max(0, opacity);
 
       const t = Math.min(1, progress / 0.85);
-      arc.packet.position.lerpVectors(arc.start, arc.end, t);
+      arc.packet.position.copy(arc.curve.getPoint(t));
       arc.packet.visible = progress < 0.85;
 
       if (progress >= 1) {
