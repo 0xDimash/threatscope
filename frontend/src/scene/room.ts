@@ -44,50 +44,133 @@ const DEVICES: Device[] = [
 
 const ROOM = { w: 12, d: 10, h: 5 };
 
-function createWorldMapTexture(): CanvasTexture {
-  const W = 64;
-  const H = 32;
+function createWorldMap(): { canvas: HTMLCanvasElement; texture: CanvasTexture; update: (elapsed: number, delta: number) => void } {
+  const W = 96;
+  const H = 48;
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d');
-  if (ctx) {
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, W, H);
+  if (!ctx) {
+    const texture = new CanvasTexture(canvas);
+    texture.colorSpace = SRGBColorSpace;
+    return { canvas, texture, update: () => {} };
+  }
 
-    // continent ellipses in 120x60 space
-    const blobs: Array<[number, number, number, number]> = [
-      [28, 22, 17, 12], [35, 33, 5, 6], [40, 10, 6, 5],
-      [41, 43, 8, 13], [61, 18, 8, 7], [63, 35, 11, 14],
-      [88, 20, 24, 12], [83, 31, 6, 7], [95, 33, 7, 5],
-      [101, 45, 10, 6], [60, 58, 30, 2],
-    ];
+  const blobs: Array<[number, number, number, number]> = [
+    [28, 22, 17, 12], [35, 33, 5, 6], [40, 10, 6, 5],
+    [41, 43, 8, 13], [61, 18, 8, 7], [63, 35, 11, 14],
+    [88, 20, 24, 12], [83, 31, 6, 7], [95, 33, 7, 5],
+    [101, 45, 10, 6], [60, 58, 30, 2],
+  ];
 
-    const CELL = 2;
-    const COLS = W / CELL;
-    const ROWS = H / CELL;
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    for (let r = 0; r < ROWS; r += 1) {
-      for (let c = 0; c < COLS; c += 1) {
-        const rx = (c + 0.5) / COLS * 120;
-        const ry = (r + 0.5) / ROWS * 60;
-        let land = false;
-        for (const [cx, cy, erx, ery] of blobs) {
-          const dx = (rx - cx) / erx;
-          const dy = (ry - cy) / ery;
-          if (dx * dx + dy * dy <= 1) { land = true; break; }
-        }
-        if (land) {
-          ctx.fillRect(c * CELL, r * CELL, CELL, CELL);
-        }
+  const CELL = 2;
+  const COLS = W / CELL;
+  const ROWS = H / CELL;
+  const landGrid: boolean[] = new Array(COLS * ROWS).fill(false);
+  for (let r = 0; r < ROWS; r += 1) {
+    for (let c = 0; c < COLS; c += 1) {
+      const rx = (c + 0.5) / COLS * 120;
+      const ry = (r + 0.5) / ROWS * 60;
+      for (const [cx, cy, erx, ery] of blobs) {
+        const dx = (rx - cx) / erx;
+        const dy = (ry - cy) / ery;
+        if (dx * dx + dy * dy <= 1) { landGrid[r * COLS + c] = true; break; }
       }
     }
   }
+
+  // locations (120x60 space -> cell coords)
+  const cities: Array<{ c: number; r: number; phase: number }> = [
+    { c: 86, r: 16, phase: 0.0 }, { c: 60, r: 13, phase: 1.3 },
+    { c: 35, r: 17, phase: 2.1 }, { c: 45, r: 39, phase: 3.4 },
+    { c: 95, r: 30, phase: 4.2 }, { c: 107, r: 18, phase: 5.1 },
+    { c: 111, r: 42, phase: 0.7 }, { c: 79, r: 22, phase: 2.8 },
+    { c: 66, r: 42, phase: 4.9 }, { c: 19, r: 17, phase: 3.0 },
+  ].map((city) => ({
+    c: Math.round((city.c / 120) * (COLS - 1)),
+    r: Math.round((city.r / 60) * (ROWS - 1)),
+    phase: city.phase,
+  }));
+
+  interface Pulse { a: number; b: number; t: number; speed: number; }
+  const pulses: Pulse[] = [];
+  let nextSpawn = 0.4;
+  let elapsed = 0;
+
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;
   texture.minFilter = LinearFilter;
   texture.magFilter = LinearFilter;
-  return texture;
+
+  function draw(): void {
+    ctx!.fillStyle = '#000000';
+    ctx!.fillRect(0, 0, W, H);
+
+    // dim land pixels
+    ctx!.fillStyle = 'rgba(255,255,255,0.18)';
+    for (let r = 0; r < ROWS; r += 1) {
+      for (let c = 0; c < COLS; c += 1) {
+        if (landGrid[r * COLS + c]) {
+          ctx!.fillRect(c * CELL, r * CELL, CELL, CELL);
+        }
+      }
+    }
+
+    // pulses
+    nextSpawn -= 1 / 60;
+    if (nextSpawn <= 0) {
+      let a = Math.floor(Math.random() * cities.length);
+      let b = Math.floor(Math.random() * cities.length);
+      if (a === b) b = (b + 1) % cities.length;
+      pulses.push({ a, b, t: 0, speed: 0.3 + Math.random() * 0.4 });
+      nextSpawn = 1.2 + Math.random() * 1.6;
+    }
+    for (let i = pulses.length - 1; i >= 0; i -= 1) {
+      const p = pulses[i];
+      p.t += p.speed / 60;
+      if (p.t > 1) { pulses.splice(i, 1); continue; }
+      const a = cities[p.a];
+      const b = cities[p.b];
+      // faint path
+      ctx!.fillStyle = 'rgba(255,255,255,0.06)';
+      const steps = 12;
+      for (let s = 0; s <= steps; s += 1) {
+        const tt = s / steps;
+        const cx = Math.round((a.c + (b.c - a.c) * tt) * CELL);
+        const cy = Math.round((a.r + (b.r - a.r) * tt) * CELL);
+        ctx!.fillRect(cx, cy, CELL, CELL);
+      }
+      // bright head with trail
+      for (let tr = 0; tr < 4; tr += 1) {
+        const tt = p.t - tr * 0.02;
+        if (tt < 0) break;
+        const cx = Math.round((a.c + (b.c - a.c) * tt) * CELL);
+        const cy = Math.round((a.r + (b.r - a.r) * tt) * CELL);
+        ctx!.fillStyle = `rgba(255,255,255,${(0.85 - tr * 0.2).toFixed(2)})`;
+        ctx!.fillRect(cx, cy, CELL, CELL);
+      }
+    }
+
+    // location highlights
+    for (const city of cities) {
+      const breathe = 0.5 + Math.sin(elapsed * 1.6 + city.phase) * 0.5;
+      ctx!.fillStyle = `rgba(255,255,255,${(0.4 + breathe * 0.5).toFixed(3)})`;
+      const size = breathe > 0.7 ? CELL * 2 : CELL;
+      const off = breathe > 0.7 ? -CELL / 2 : 0;
+      ctx!.fillRect(city.c * CELL + off, city.r * CELL + off, size, size);
+    }
+
+    texture.needsUpdate = true;
+  }
+
+  function update(e: number, _delta: number): void {
+    elapsed = e;
+    draw();
+  }
+
+  draw();
+  return { canvas, texture, update };
 }
 
 export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: boolean; labels?: boolean; pixelRatio?: number; events?: readonly SecurityEvent[]; eventIntervalMs?: number } = {}): CityScene {
@@ -201,10 +284,10 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   uplinkRing.rotation.x = Math.PI / 2;
   uplinkGroup.add(uplinkRing);
 
-  const mapTexture = createWorldMapTexture();
+  const worldMap = createWorldMap();
   const mapPlane = new Mesh(
     new BoxGeometry(0.9, 0.01, 0.9),
-    new MeshBasicMaterial({ map: mapTexture, transparent: true, opacity: 1.0 }),
+    new MeshBasicMaterial({ map: worldMap.texture, transparent: true, opacity: 1.0 }),
   );
   uplinkGroup.add(mapPlane);
 
@@ -260,6 +343,7 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     const delta = Math.min(0.05, clock.getDelta());
     elapsed += delta;
     controls.update();
+    worldMap.update(elapsed, delta);
     arcs.update(elapsed, delta);
     renderer.info.reset();
     renderContext.render();
@@ -322,6 +406,7 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
       if (eventTimer) window.clearInterval(eventTimer);
       controls.dispose();
       labels.dispose();
+      worldMap.texture.dispose();
       arcs.dispose();
       renderContext.dispose();
     },
