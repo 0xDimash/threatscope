@@ -1,4 +1,4 @@
-import type { Asset, Link } from '../types/contract';
+import type { Asset, Link, SecurityEvent } from '../types/contract';
 
 export interface Inventory {
   assets: Asset[];
@@ -11,6 +11,8 @@ export interface SceneOptions {
   bloom?: boolean;
   labels?: boolean;
   pixelRatio?: number;
+  events?: readonly SecurityEvent[];
+  eventIntervalMs?: number;
 }
 
 export interface SceneStats {
@@ -32,4 +34,5 @@ export interface CityScene {
   getStats(): SceneStats;
   pick(clientX: number, clientY: number): string | null;
   focusAsset(id: string, distance?: number): void;
+  spawnArc?(event: SecurityEvent): void;
 }

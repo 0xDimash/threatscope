@@ -32,8 +32,8 @@ export function renderMenu(root: HTMLElement, callbacks: MenuCallbacks): void {
 
   const pixelMap = document.createElement('canvas');
   pixelMap.className = 'menu-pixelmap';
-  pixelMap.width = 160;
-  pixelMap.height = 80;
+  pixelMap.width = 240;
+  pixelMap.height = 120;
   brand.append(pixelMap);
   startPixelMap(pixelMap);
 
@@ -122,17 +122,46 @@ function startPixelMap(canvas: HTMLCanvasElement): void {
   // Continent ellipses in a 120x60 reference space.
   interface Blob { cx: number; cy: number; rx: number; ry: number; }
   const BLOBS: Blob[] = [
-    { cx: 28, cy: 22, rx: 17, ry: 12 },
-    { cx: 35, cy: 33, rx: 5, ry: 6 },
-    { cx: 40, cy: 10, rx: 6, ry: 5 },
-    { cx: 41, cy: 43, rx: 8, ry: 13 },
-    { cx: 61, cy: 18, rx: 8, ry: 7 },
-    { cx: 63, cy: 35, rx: 11, ry: 14 },
-    { cx: 88, cy: 20, rx: 24, ry: 12 },
-    { cx: 83, cy: 31, rx: 6, ry: 7 },
-    { cx: 95, cy: 33, rx: 7, ry: 5 },
-    { cx: 101, cy: 45, rx: 10, ry: 6 },
-    { cx: 60, cy: 58, rx: 30, ry: 2 },
+    // North America
+    { cx: 18, cy: 14, rx: 5, ry: 4 }, // Alaska
+    { cx: 24, cy: 19, rx: 7, ry: 6 }, // Canada
+    { cx: 26, cy: 26, rx: 6, ry: 4 }, // US
+    { cx: 27, cy: 29, rx: 2, ry: 2 }, // Florida
+    { cx: 29, cy: 29, rx: 3, ry: 3 }, // Mexico
+    { cx: 31, cy: 31, rx: 3, ry: 4 }, // Central America
+    { cx: 40, cy: 10, rx: 5, ry: 4 }, // Greenland
+    // South America
+    { cx: 38, cy: 40, rx: 5, ry: 9 },
+    { cx: 40, cy: 50, rx: 3, ry: 4 },
+    { cx: 38, cy: 55, rx: 2, ry: 2 },
+    // Europe
+    { cx: 56, cy: 16, rx: 3, ry: 3 }, // UK
+    { cx: 60, cy: 11, rx: 3, ry: 5 }, // Scandinavia
+    { cx: 60, cy: 18, rx: 5, ry: 5 }, // mainland
+    { cx: 63, cy: 20, rx: 2, ry: 3 }, // Italy
+    { cx: 56, cy: 22, rx: 3, ry: 3 }, // Iberia
+    // Africa
+    { cx: 60, cy: 30, rx: 7, ry: 9 },
+    { cx: 62, cy: 40, rx: 5, ry: 5 },
+    { cx: 66, cy: 44, rx: 3, ry: 3 },
+    { cx: 68, cy: 30, rx: 2, ry: 3 }, // horn
+    { cx: 58, cy: 44, rx: 2, ry: 2 }, // Madagascar
+    // Asia
+    { cx: 76, cy: 12, rx: 10, ry: 5 }, // Siberia
+    { cx: 80, cy: 10, rx: 7, ry: 3 },
+    { cx: 82, cy: 20, rx: 10, ry: 5 }, // China
+    { cx: 90, cy: 18, rx: 5, ry: 4 },
+    { cx: 76, cy: 28, rx: 4, ry: 5 }, // India
+    { cx: 86, cy: 30, rx: 5, ry: 4 }, // SE Asia
+    { cx: 90, cy: 34, rx: 3, ry: 3 },
+    { cx: 98, cy: 20, rx: 3, ry: 5 }, // Korea/Japan
+    { cx: 102, cy: 22, rx: 2, ry: 3 }, // Japan
+    // Australia
+    { cx: 100, cy: 42, rx: 7, ry: 4 },
+    { cx: 98, cy: 46, rx: 3, ry: 2 },
+    { cx: 106, cy: 44, rx: 2, ry: 2 }, // New Zealand
+    // Antarctica
+    { cx: 60, cy: 58, rx: 32, ry: 2 },
   ];
 
   const inBlob = (gx: number, gy: number): boolean => {
@@ -166,6 +195,10 @@ function startPixelMap(canvas: HTMLCanvasElement): void {
     { c: 79, r: 22, phase: 2.8 },
     { c: 66, r: 42, phase: 4.9 },
     { c: 19, r: 17, phase: 3.0 },
+    { c: 75, r: 32, phase: 1.7 }, // Mumbai
+    { c: 62, r: 28, phase: 3.9 }, // Cairo
+    { c: 102, r: 16, phase: 5.6 }, // Seoul
+    { c: 42, r: 46, phase: 2.4 }, // Buenos Aires
   ].map((city) => ({
     c: Math.round((city.c / 120) * (COLS - 1)),
     r: Math.round((city.r / 60) * (ROWS - 1)),

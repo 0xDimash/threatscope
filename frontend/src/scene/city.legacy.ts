@@ -6,10 +6,9 @@ import {
   Vector3,
   type Group,
   type Mesh,
-  type ShaderMaterial,
-  type SpriteMaterial,
 } from 'three';
 import { createAssetMeshes, type AssetNode } from './assetMeshes';
+import { createArcsLayer } from '../viz/arcs';
 import { createCameraRig } from './camera';
 import { createDistricts } from './districts';
 import { createEnvironment } from './environment';
@@ -22,11 +21,10 @@ import { createRingRoad } from './ringRoad';
 import { createRivers } from './rivers';
 import { createGlowTexture } from './textures';
 import type { CityScene, SceneOptions, SceneStats } from './types';
+import type { SecurityEvent } from '../types/contract';
 
 interface AnimatedNode {
   group: Group;
-  uTime: { value: number };
-  glow: SpriteMaterial;
   halo: Mesh;
   spin: number;
   phase: number;
@@ -65,14 +63,19 @@ export function createCityScene(canvas: HTMLCanvasElement, options: SceneOptions
   const assets = createAssetMeshes(options.assets, { glowTexture, labels });
   scene.add(assets.group);
 
-  const renderContext = createRenderContext(renderer, scene, rig.camera, { bloom: options.bloom });
+  const arcs = createArcsLayer({
+    scene,
+    assets: options.assets,
+    viewportWidth: canvas.clientWidth,
+    viewportHeight: canvas.clientHeight,
+  });
+
+  const renderContext = createRenderContext(renderer, scene, rig.camera, { bloom: options.bloom ?? false });
 
   const animated: AnimatedNode[] = [];
   assets.nodes.forEach((node: AssetNode) => {
     animated.push({
       group: node.group,
-      uTime: (node.shell.material as ShaderMaterial).uniforms.uTime as { value: number },
-      glow: node.glow.material as SpriteMaterial,
       halo: node.halo,
       spin: node.kind === 'external' ? 0.55 : 0.12,
       phase: node.group.position.z,
@@ -86,6 +89,7 @@ export function createCityScene(canvas: HTMLCanvasElement, options: SceneOptions
   let frameHandle = 0;
   let running = false;
   let elapsed = 0;
+  let eventTimer = 0;
 
   function viewportSize(): { width: number; height: number } {
     const rect = canvas.getBoundingClientRect();
@@ -98,6 +102,7 @@ export function createCityScene(canvas: HTMLCanvasElement, options: SceneOptions
     const { width, height } = viewportSize();
     rig.resize(width, height);
     renderContext.setSize(width, height);
+    arcs.resize(width, height);
   }
 
   function render(): void {
@@ -110,10 +115,10 @@ export function createCityScene(canvas: HTMLCanvasElement, options: SceneOptions
 
     for (const node of animated) {
       node.group.rotation.y += delta * node.spin;
-      node.uTime.value = elapsed;
       node.halo.rotation.z += delta * 0.35;
-      node.glow.opacity = 0.17 + Math.sin(elapsed * 2 + node.phase) * 0.04;
     }
+
+    arcs.update(elapsed, delta);
 
     renderer.info.reset();
     renderContext.render();
@@ -138,6 +143,15 @@ export function createCityScene(canvas: HTMLCanvasElement, options: SceneOptions
   observer?.observe(canvas);
   window.addEventListener('resize', resize);
   resize();
+
+  const demoEvents = options.events ?? [];
+  if (demoEvents.length > 0) {
+    let index = 0;
+    eventTimer = window.setInterval(() => {
+      arcs.spawn(demoEvents[index % demoEvents.length]);
+      index += 1;
+    }, options.eventIntervalMs ?? 1100);
+  }
 
   function getStats(): SceneStats {
     const frameMs =
@@ -182,6 +196,7 @@ export function createCityScene(canvas: HTMLCanvasElement, options: SceneOptions
       sceneApi.stop();
       window.removeEventListener('resize', resize);
       observer?.disconnect();
+      if (eventTimer) window.clearInterval(eventTimer);
       scene.remove(assets.group, districts.group, rivers.group, ringRoad.group, ridge.group);
       ground.group.removeFromParent();
       lights.group.removeFromParent();
@@ -195,6 +210,7 @@ export function createCityScene(canvas: HTMLCanvasElement, options: SceneOptions
       environment.dispose();
       labels.dispose();
       glowTexture.dispose();
+      arcs.dispose();
       rig.dispose();
       renderContext.dispose();
     },
@@ -227,6 +243,9 @@ export function createCityScene(canvas: HTMLCanvasElement, options: SceneOptions
         new Vector3(node.group.position.x, node.group.position.y, node.group.position.z),
         distance,
       );
+    },
+    spawnArc(event: SecurityEvent): void {
+      arcs.spawn(event);
     },
   };
 

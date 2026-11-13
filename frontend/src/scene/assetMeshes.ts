@@ -1,28 +1,22 @@
 import {
-  AdditiveBlending,
   BoxGeometry,
-  Color,
   ConeGeometry,
   CylinderGeometry,
-  DoubleSide,
   Group,
-  IcosahedronGeometry,
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
   OctahedronGeometry,
-  ShaderMaterial,
   SphereGeometry,
-  Sprite,
   SpriteMaterial,
   TetrahedronGeometry,
   TorusGeometry,
   type BufferGeometry,
+  type Sprite,
   type Texture,
 } from 'three';
 import type { Asset, AssetKind } from '../types/contract';
 import { kindColor, kindLabelColor, kindStyle } from './palette';
-import { SHIELD_FRAGMENT_SHADER, SHIELD_VERTEX_SHADER } from './shaders';
 import type { LabelFactory } from './labels';
 
 export interface AssetNode {
@@ -31,9 +25,7 @@ export interface AssetNode {
   kind: AssetKind;
   group: Group;
   mesh: Mesh;
-  glow: Sprite;
   halo: Mesh;
-  shell: Mesh;
   label: Sprite | null;
 }
 
@@ -142,20 +134,7 @@ export function createAssetMeshes(
     node.add(mesh);
     clickables.push(mesh);
 
-    const glow = new Sprite(
-      new SpriteMaterial({
-        map: options.glowTexture,
-        color,
-        transparent: true,
-        blending: AdditiveBlending,
-        depthWrite: false,
-        opacity: 0.2,
-      }),
-    );
-    glow.name = `asset-glow-${asset.id}`;
-    glow.scale.setScalar(isDistrict ? 5.5 : 8);
-    node.add(glow);
-
+    // glow sprite removed for cleaner high-contrast look
     const haloRadius = isDistrict ? 2.5 : 4.1;
     const halo = new Mesh(
       new TorusGeometry(haloRadius, isDistrict ? 0.04 : 0.055, 8, 48),
@@ -166,24 +145,7 @@ export function createAssetMeshes(
     halo.position.y = -3.0;
     node.add(halo);
 
-    const shell = new Mesh(
-      new IcosahedronGeometry(isDistrict ? 1.9 : 3.0, 1),
-      new ShaderMaterial({
-        vertexShader: SHIELD_VERTEX_SHADER,
-        fragmentShader: SHIELD_FRAGMENT_SHADER,
-        uniforms: {
-          uTime: { value: 0 },
-          uColor: { value: new Color(color) },
-          uThreat: { value: 0 },
-        },
-        transparent: true,
-        blending: AdditiveBlending,
-        depthWrite: false,
-        side: DoubleSide,
-      }),
-    );
-    shell.name = `asset-shell-${asset.id}`;
-    node.add(shell);
+    // shield shell not added (removed for cleaner high-contrast look)
 
     const labelText = isDistrict ? asset.name.toUpperCase() : asset.name;
     const label = options.labels.create(
@@ -205,9 +167,7 @@ export function createAssetMeshes(
       kind: asset.kind,
       group: node,
       mesh,
-      glow,
       halo,
-      shell,
       label,
     });
   }
@@ -224,11 +184,8 @@ export function createAssetMeshes(
         } else {
           material.dispose();
         }
-        (node.glow.material as SpriteMaterial).dispose();
         node.halo.geometry.dispose();
         (node.halo.material as MeshBasicMaterial).dispose();
-        node.shell.geometry.dispose();
-        (node.shell.material as ShaderMaterial).dispose();
         if (node.label) {
           (node.label.material as SpriteMaterial).dispose();
         }

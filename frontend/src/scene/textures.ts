@@ -36,8 +36,9 @@ export function createLabelTexture(text: string, color: string): CanvasTexture {
     ctx.font = 'bold 76px "SF Mono", Consolas, monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 20;
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = '#ffffff';
+    ctx.strokeText(text, 512, 96);
     ctx.fillStyle = color;
     ctx.fillText(text, 512, 96);
   }

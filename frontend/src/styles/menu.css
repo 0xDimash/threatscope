@@ -406,3 +406,13 @@
   font-size: 11px;
   color: #3a3a3a;
 }
+
+.menu-pixelmap {
+  width: 100%;
+  max-width: 900px;
+  height: auto;
+  aspect-ratio: 2 / 1;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  opacity: 0.9;
+}
