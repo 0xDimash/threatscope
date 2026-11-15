@@ -2,6 +2,8 @@ import './styles/scene.css';
 import './styles/menu.css';
 import { createRoomScene } from './scene/room';
 import { fixtureEvents } from './data/contract-fixtures';
+import { connectFeed, type AggregateState, type FeedStatus } from './data';
+import type { SecurityEvent } from './types/contract';
 import type { CityScene } from './scene/types';
 import { renderMenu, showNewSpaceNotice } from './ui/menu';
 import { SPACES } from './ui/spaces';
@@ -107,3 +109,37 @@ backBtn.addEventListener('click', () => {
 settingsBtn.addEventListener('click', openSettingsModal);
 window.addEventListener('hashchange', route);
 route();
+
+/** Live snapshot exposed as `window.__threatscopeLive` for manual verification. */
+const live = {
+  feed: 'connecting' as FeedStatus,
+  events: 0,
+  state: null as AggregateState | null,
+  lastEvent: null as SecurityEvent | null,
+};
+
+declare global {
+  interface Window {
+    __threatscopeLive?: typeof live;
+  }
+}
+
+window.__threatscopeLive = live;
+
+const stopFeed = connectFeed({
+  onStatus(status: FeedStatus, detail?: string): void {
+    live.feed = status;
+    console.info(`[threatscope] live feed ${status}${detail ? ` (${detail})` : ''}`);
+  },
+  onFrame(frame): void {
+    if (frame.kind === 'event') {
+      live.events += 1;
+      live.lastEvent = frame.data;
+      active?.spawnArc?.(frame.data);
+    } else if (frame.kind === 'state') {
+      live.state = frame.data;
+    }
+  },
+});
+
+window.addEventListener('beforeunload', stopFeed, { once: true });

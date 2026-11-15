@@ -1,0 +1,114 @@
+/**
+ * Typed REST client for the backend contract (`docs/api-contract.md`).
+ *
+ * This is the only module that knows the API origin: everything else imports these wrappers
+ * (or the barrel `./index`), so changing the host or adding auth happens in one place.
+ * `VITE_API_BASE` overrides the default, which mirrors the page host on port 8000.
+ */
+import type { Asset, Link, SecurityEvent, Severity } from '../types/contract';
+
+export interface AggregateState {
+  threat_level: 'low' | 'guarded' | 'elevated' | 'high' | 'severe';
+  counts: { info: number; low: number; medium: number; high: number; critical: number };
+  compromised_assets: number;
+  kill_chain: Record<string, number>;
+  top_types: { type: string; count: number }[];
+}
+
+export interface RiskState {
+  asset_id: string;
+  risk: number;
+  state: 'ok' | 'elevated' | 'critical' | 'compromised';
+  events_24h: number;
+  last_event_ts: string | null;
+  top_types: string[];
+}
+
+export interface Inventory {
+  assets: Asset[];
+  links: Link[];
+}
+
+export interface EventsPage {
+  events: SecurityEvent[];
+  next_cursor: string | null;
+}
+
+export interface EventQuery {
+  limit?: number;
+  severity?: Severity;
+  type?: string;
+  assetId?: string;
+  from?: string;
+  to?: string;
+  cursor?: string;
+}
+
+/** Raised for non-2xx responses so callers can show a useful message instead of `undefined`. */
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+const API_BASE = resolveApiBase();
+
+/** Resolved REST base (no trailing slash), e.g. `http://localhost:8000`. */
+export function apiBase(): string {
+  return API_BASE;
+}
+
+/** `GET /api/assets` — the seeded inventory the city is built from. */
+export function fetchInventory(signal?: AbortSignal): Promise<Inventory> {
+  return getJson<Inventory>('/api/assets', signal);
+}
+
+/** `GET /api/events` — newest first, cursor paginated. */
+export function fetchEvents(query: EventQuery = {}, signal?: AbortSignal): Promise<EventsPage> {
+  const params = new URLSearchParams();
+  if (query.limit !== undefined) params.set('limit', String(query.limit));
+  if (query.severity) params.set('severity', query.severity);
+  if (query.type) params.set('type', query.type);
+  if (query.assetId) params.set('asset_id', query.assetId);
+  if (query.from) params.set('from', query.from);
+  if (query.to) params.set('to', query.to);
+  if (query.cursor) params.set('cursor', query.cursor);
+  const suffix = params.size > 0 ? `?${params.toString()}` : '';
+  return getJson<EventsPage>(`/api/events${suffix}`, signal);
+}
+
+/** `GET /api/state` — aggregate threat level, severity counts and kill-chain progress. */
+export function fetchState(signal?: AbortSignal): Promise<AggregateState> {
+  return getJson<AggregateState>('/api/state', signal);
+}
+
+/** `GET /api/assets/{id}/risk` — latest risk snapshot for one asset. */
+export function fetchAssetRisk(assetId: string, signal?: AbortSignal): Promise<RiskState> {
+  return getJson<RiskState>(`/api/assets/${encodeURIComponent(assetId)}/risk`, signal);
+}
+
+async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    signal,
+    headers: { Accept: 'application/json' },
+  });
+  if (!response.ok) {
+    throw new ApiError(response.status, `GET ${path} failed with HTTP ${response.status}`);
+  }
+  return (await response.json()) as T;
+}
+
+function resolveApiBase(): string {
+  const configured = import.meta.env.VITE_API_BASE as string | undefined;
+  if (typeof configured === 'string' && configured.trim().length > 0) {
+    return configured.trim().replace(/\/+$/, '');
+  }
+  if (typeof window !== 'undefined' && window.location.hostname) {
+    return `${window.location.protocol}//${window.location.hostname}:8000`;
+  }
+  return 'http://localhost:8000';
+}
