@@ -245,15 +245,20 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
 
   const clickables: Mesh[] = [];
   const positions = new Map<string, Vector3>();
+  const meshById = new Map<string, Mesh>();
+  const materialById = new Map<string, MeshBasicMaterial>();
 
   for (const dev of DEVICES) {
+    const mat = new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0 });
     const box = new Mesh(
       new BoxGeometry(dev.size.x, dev.size.y, dev.size.z),
-      new MeshBasicMaterial({ color: 0xffffff }),
+      mat,
     );
     box.position.set(dev.pos.x, dev.pos.y + dev.size.y / 2, dev.pos.z);
     box.userData.assetId = dev.id;
     clickables.push(box);
+    meshById.set(dev.id, box);
+    materialById.set(dev.id, mat);
     devicesGroup.add(box);
 
     // wireframe edges for contrast
@@ -334,16 +339,27 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
 
   function resize(): void {
     const { width, height } = viewportSize();
-    camera.aspect = height > 0 ? width / height : 1;
+    if (width < 1 || height < 1) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    const MAX = 2048;
+    let bufW = Math.round(width * dpr);
+    let bufH = Math.round(height * dpr);
+    if (bufW > MAX) { const s = MAX / bufW; bufW = MAX; bufH = Math.round(bufH * s); }
+    if (bufH > MAX) { const s = MAX / bufH; bufH = MAX; bufW = Math.round(bufW * s); }
+    camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    renderContext.setSize(width, height);
-    arcs.resize(width, height);
+    renderContext.setSize(bufW, bufH);
+    arcs.resize(bufW, bufH);
   }
 
   function render(): void {
     const delta = Math.min(0.05, clock.getDelta());
     elapsed += delta;
     controls.update();
+    if (hoveredId) {
+      const m = materialById.get(hoveredId);
+      if (m) m.opacity = 0.4 + 0.2 * Math.sin(elapsed * 4);
+    }
     worldMap.update(elapsed, delta);
     arcs.update(elapsed, delta);
     renderer.info.reset();
@@ -357,10 +373,52 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     render();
   }
 
+  let hoveredId: string | null = null;
+
+  const hoverRaycaster = new Raycaster();
+  const hoverPointer = new Vector2();
+
+  function updateHover(clientX: number, clientY: number): void {
+    const rect = canvas.getBoundingClientRect();
+    hoverPointer.set(
+      ((clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1,
+      -((clientY - rect.top) / Math.max(1, rect.height)) * 2 + 1,
+    );
+    hoverRaycaster.setFromCamera(hoverPointer, camera);
+    const hits = hoverRaycaster.intersectObjects(clickables, false);
+    const id = (hits[0]?.object.userData.assetId as string | undefined) ?? null;
+    if (id === hoveredId) return;
+    // restore previous
+    if (hoveredId) {
+      const m = materialById.get(hoveredId);
+      if (m) m.opacity = 1.0;
+    }
+    hoveredId = id;
+    if (id) {
+      const m = materialById.get(id);
+      if (m) m.opacity = 0.45;
+      canvas.style.cursor = 'pointer';
+    } else {
+      canvas.style.cursor = '';
+    }
+  }
+
   const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => resize());
   observer?.observe(canvas);
   window.addEventListener('resize', resize);
   resize();
+
+  const onHoverMove = (e: MouseEvent): void => updateHover(e.clientX, e.clientY);
+  const onHoverLeave = (): void => {
+    if (hoveredId) {
+      const m = materialById.get(hoveredId);
+      if (m) m.opacity = 1.0;
+    }
+    hoveredId = null;
+    canvas.style.cursor = '';
+  };
+  canvas.addEventListener('mousemove', onHoverMove);
+  canvas.addEventListener('mouseleave', onHoverLeave);
 
   const demoEvents = options.events ?? [];
   const severities: SecurityEvent['severity'][] = ['critical', 'high', 'medium', 'low', 'info'];
@@ -403,6 +461,8 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     dispose(): void {
       sceneApi.stop();
       window.removeEventListener('resize', resize);
+      canvas.removeEventListener('mousemove', onHoverMove);
+      canvas.removeEventListener('mouseleave', onHoverLeave);
       observer?.disconnect();
       if (eventTimer) window.clearInterval(eventTimer);
       controls.dispose();

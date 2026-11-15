@@ -5,6 +5,7 @@ import { fixtureEvents } from './data/contract-fixtures';
 import { connectFeed, type AggregateState, type FeedStatus } from './data';
 import type { SecurityEvent } from './types/contract';
 import type { CityScene } from './scene/types';
+import { createHud, type HudApi } from './ui/hud';
 import { renderMenu, showNewSpaceNotice } from './ui/menu';
 import { SPACES } from './ui/spaces';
 import { openSettings, readSetting } from './ui/settings';
@@ -32,6 +33,7 @@ const FACTORIES: Record<string, SceneFactory> = {
 };
 
 let active: CityScene | null = null;
+let activeHud: HudApi | null = null;
 let activeSpaceId: string | null = null;
 
 function settingsOptions(): { bloom: boolean; labels: boolean } {
@@ -40,8 +42,11 @@ function settingsOptions(): { bloom: boolean; labels: boolean } {
 }
 
 function disposeActive(): void {
+  if (active && (active as any).__hudTimer) window.clearInterval((active as any).__hudTimer);
   active?.dispose();
   active = null;
+  activeHud?.dispose();
+  activeHud = null;
   activeSpaceId = null;
 }
 
@@ -78,6 +83,42 @@ function openSpace(spaceId: string): void {
   active = scene;
   activeSpaceId = spaceId;
   (window as Window & { __threatscope?: CityScene }).__threatscope = scene;
+
+  if (spaceId === 'room') {
+    const hudHost = document.querySelector<HTMLElement>('#hud');
+    if (hudHost) {
+      const hud = createHud(hudHost);
+      activeHud = hud;
+      // feed fixture events + a mock aggregate state
+      const counts = { info: 0, low: 0, medium: 0, high: 0, critical: 0 };
+      let idx = 0;
+      const feed = window.setInterval(() => {
+        const ev = fixtureEvents[idx % fixtureEvents.length];
+        // remap dst to a room device so arcs/HUD line up
+        const devIds = ['room-rack', 'room-pc1', 'room-pc2', 'room-nas', 'room-iot', 'room-cam'];
+        const ev2 = { ...ev, id: `hud-${idx}`, dst: { ...ev.dst, asset_id: devIds[idx % devIds.length] } };
+        counts[ev.severity] += 1;
+        hud.addEvent(ev2);
+        const total = counts.info + counts.low + counts.medium + counts.high + counts.critical;
+        const threatLevel =
+          counts.critical > 0 ? 'severe' : counts.high > 0 ? 'high' : counts.medium > 0 ? 'elevated' : 'guarded';
+        hud.setState({
+          threat_level: threatLevel as any,
+          counts: { ...counts },
+          compromised_assets: counts.critical > 2 ? 1 : 0,
+          kill_chain: { reconnaissance: Math.min(1, total / 20), initial_access: Math.min(1, total / 30), c2: 0.2, exploitation: 0.1, lateral_movement: 0, impact: 0 },
+          top_types: [{ type: ev.type, count: 1 }],
+        });
+        idx += 1;
+      }, 1500);
+      // store timer on scene? store on window for cleanup
+      (active as any).__hudTimer = feed;
+      hudHost.addEventListener('hud:select', (e: any) => {
+        scene.focusAsset(e.detail);
+        hud.selectAsset(e.detail, null);
+      });
+    }
+  }
 }
 
 function openSettingsModal(): void {
@@ -105,6 +146,14 @@ function route(): void {
 
 backBtn.addEventListener('click', () => {
   window.location.hash = '#/';
+});
+canvas.addEventListener('click', (event: MouseEvent) => {
+  if (!active) return;
+  const id = active.pick(event.clientX, event.clientY);
+  if (id) {
+    active.focusAsset(id);
+    activeHud?.selectAsset(id, null);
+  }
 });
 settingsBtn.addEventListener('click', openSettingsModal);
 window.addEventListener('hashchange', route);

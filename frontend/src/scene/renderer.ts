@@ -37,7 +37,7 @@ export function createRenderer(canvas: HTMLCanvasElement, options: RendererOptio
     stencil: false,
     powerPreference: 'high-performance',
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, options.pixelRatio ?? 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, options.pixelRatio ?? 1.5));
   renderer.outputColorSpace = SRGBColorSpace;
   renderer.toneMapping = ACESFilmicToneMapping;
   renderer.toneMappingExposure = options.exposure ?? 1.0;
@@ -77,6 +77,7 @@ export function createRenderContext(
       composer.render();
     },
     setSize(width: number, height: number): void {
+      if (width < 1 || height < 1) return;
       renderer.setSize(width, height, false);
       composer.setSize(width, height);
       const ratio = renderer.getPixelRatio();
