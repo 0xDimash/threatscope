@@ -334,10 +334,17 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
 
   function resize(): void {
     const { width, height } = viewportSize();
-    camera.aspect = height > 0 ? width / height : 1;
+    if (width < 1 || height < 1) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    const MAX = 2048;
+    let bufW = Math.round(width * dpr);
+    let bufH = Math.round(height * dpr);
+    if (bufW > MAX) { const s = MAX / bufW; bufW = MAX; bufH = Math.round(bufH * s); }
+    if (bufH > MAX) { const s = MAX / bufH; bufH = MAX; bufW = Math.round(bufW * s); }
+    camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    renderContext.setSize(width, height);
-    arcs.resize(width, height);
+    renderContext.setSize(bufW, bufH);
+    arcs.resize(bufW, bufH);
   }
 
   function render(): void {
