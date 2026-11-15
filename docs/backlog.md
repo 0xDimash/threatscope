@@ -84,12 +84,12 @@ the `risk` frame — without any API shape change.
 **Owner:** Platform · **Zone:** `frontend/src/data` (Design contributes)
 · **Depends on:** nothing (all backend endpoints exist) · **Branch:** `feat/data-ws-client`
 
-- [ ] `frontend/src/data/api.ts`: typed REST wrappers for `/api/assets`, `/api/events`,
+- [x] `frontend/src/data/api.ts`: typed REST wrappers for `/api/assets`, `/api/events`,
   `/api/state`, `/api/assets/{id}/risk`
-- [ ] `frontend/src/data/socket.ts`: reconnecting WS client emitting the three frame kinds
-- [ ] frames parsed against `frontend/src/types/contract.ts`; unknown `kind` ignored, not thrown
-- [ ] `VITE_API_BASE` env switch: mock fixtures vs live backend
-- [ ] manual check: two tabs, events from `make simulate` visible in both
+- [x] `frontend/src/data/socket.ts`: reconnecting WS client emitting the three frame kinds
+- [x] frames parsed against `frontend/src/types/contract.ts`; unknown `kind` ignored, not thrown
+- [x] `VITE_API_BASE` env switch: mock fixtures vs live backend
+- [x] manual check: two tabs, events from `make simulate` visible in both
 
 **Done when:** Design consumes a live feed by importing one module — no `fetch` in `scene/`.
 
@@ -126,5 +126,22 @@ the `risk` frame — without any API shape change.
 
 ## Next after this sprint
 
-Replay/time controls, drill-down timeline, export for thesis figures (Design + Cyber A);
-auth, deployment, hardening (Cyber B). Blocked until #3–#6 exist.
+Replay/time controls, drill-down timeline, export for thesis figures (Design + Cyber A); auth,
+deployment, hardening (Cyber B). Blocked until #3–#6 exist.
+
+### Cybersecurity B (Platform) — follow-ups
+
+Ordered by dependency; every item needs its own branch and PR.
+
+- [ ] **Auth** — token issue/verify, protect `/api/ingest*` and the WS handshake; document the
+  flow in `docs/api-contract.md` before merging
+- [ ] **Postgres cut-over** — verify `DATABASE_URL` swap, migrations and the two event indexes
+  on a real Postgres instance; no model changes
+- [ ] **Deployment** — reverse proxy + TLS in front of `infra/docker-compose.yml`, healthchecks,
+  restart policy, `.env` template for production
+- [ ] **Retention & backup** — scheduled prune of old `events` / `risk_snapshots`, SQLite backup
+  step in the runbook
+- [ ] **Hardening** — request size limits on ingest, rate limiting, CORS allow-list per
+  environment, dependency audit in CI
+- [ ] **Operational runbook** — start, seed, reset, migrate, troubleshoot in `README.md`
+
