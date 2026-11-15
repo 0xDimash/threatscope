@@ -246,16 +246,19 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   const clickables: Mesh[] = [];
   const positions = new Map<string, Vector3>();
   const meshById = new Map<string, Mesh>();
+  const materialById = new Map<string, MeshBasicMaterial>();
 
   for (const dev of DEVICES) {
+    const mat = new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0 });
     const box = new Mesh(
       new BoxGeometry(dev.size.x, dev.size.y, dev.size.z),
-      new MeshBasicMaterial({ color: 0xffffff }),
+      mat,
     );
     box.position.set(dev.pos.x, dev.pos.y + dev.size.y / 2, dev.pos.z);
     box.userData.assetId = dev.id;
     clickables.push(box);
     meshById.set(dev.id, box);
+    materialById.set(dev.id, mat);
     devicesGroup.add(box);
 
     // wireframe edges for contrast
@@ -353,6 +356,10 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     const delta = Math.min(0.05, clock.getDelta());
     elapsed += delta;
     controls.update();
+    if (hoveredId) {
+      const m = materialById.get(hoveredId);
+      if (m) m.opacity = 0.4 + 0.2 * Math.sin(elapsed * 4);
+    }
     worldMap.update(elapsed, delta);
     arcs.update(elapsed, delta);
     renderer.info.reset();
@@ -381,15 +388,15 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     const hits = hoverRaycaster.intersectObjects(clickables, false);
     const id = (hits[0]?.object.userData.assetId as string | undefined) ?? null;
     if (id === hoveredId) return;
-    // reset previous
+    // restore previous
     if (hoveredId) {
-      const m = meshById.get(hoveredId);
-      if (m) m.scale.set(1, 1, 1);
+      const m = materialById.get(hoveredId);
+      if (m) m.opacity = 1.0;
     }
     hoveredId = id;
     if (id) {
-      const m = meshById.get(id);
-      if (m) m.scale.set(1.08, 1.08, 1.08);
+      const m = materialById.get(id);
+      if (m) m.opacity = 0.45;
       canvas.style.cursor = 'pointer';
     } else {
       canvas.style.cursor = '';
@@ -404,8 +411,8 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   const onHoverMove = (e: MouseEvent): void => updateHover(e.clientX, e.clientY);
   const onHoverLeave = (): void => {
     if (hoveredId) {
-      const m = meshById.get(hoveredId);
-      if (m) m.scale.set(1, 1, 1);
+      const m = materialById.get(hoveredId);
+      if (m) m.opacity = 1.0;
     }
     hoveredId = null;
     canvas.style.cursor = '';
