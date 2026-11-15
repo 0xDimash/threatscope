@@ -245,6 +245,7 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
 
   const clickables: Mesh[] = [];
   const positions = new Map<string, Vector3>();
+  const meshById = new Map<string, Mesh>();
 
   for (const dev of DEVICES) {
     const box = new Mesh(
@@ -254,6 +255,7 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     box.position.set(dev.pos.x, dev.pos.y + dev.size.y / 2, dev.pos.z);
     box.userData.assetId = dev.id;
     clickables.push(box);
+    meshById.set(dev.id, box);
     devicesGroup.add(box);
 
     // wireframe edges for contrast
@@ -364,10 +366,52 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     render();
   }
 
+  let hoveredId: string | null = null;
+
+  const hoverRaycaster = new Raycaster();
+  const hoverPointer = new Vector2();
+
+  function updateHover(clientX: number, clientY: number): void {
+    const rect = canvas.getBoundingClientRect();
+    hoverPointer.set(
+      ((clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1,
+      -((clientY - rect.top) / Math.max(1, rect.height)) * 2 + 1,
+    );
+    hoverRaycaster.setFromCamera(hoverPointer, camera);
+    const hits = hoverRaycaster.intersectObjects(clickables, false);
+    const id = (hits[0]?.object.userData.assetId as string | undefined) ?? null;
+    if (id === hoveredId) return;
+    // reset previous
+    if (hoveredId) {
+      const m = meshById.get(hoveredId);
+      if (m) m.scale.set(1, 1, 1);
+    }
+    hoveredId = id;
+    if (id) {
+      const m = meshById.get(id);
+      if (m) m.scale.set(1.08, 1.08, 1.08);
+      canvas.style.cursor = 'pointer';
+    } else {
+      canvas.style.cursor = '';
+    }
+  }
+
   const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => resize());
   observer?.observe(canvas);
   window.addEventListener('resize', resize);
   resize();
+
+  const onHoverMove = (e: MouseEvent): void => updateHover(e.clientX, e.clientY);
+  const onHoverLeave = (): void => {
+    if (hoveredId) {
+      const m = meshById.get(hoveredId);
+      if (m) m.scale.set(1, 1, 1);
+    }
+    hoveredId = null;
+    canvas.style.cursor = '';
+  };
+  canvas.addEventListener('mousemove', onHoverMove);
+  canvas.addEventListener('mouseleave', onHoverLeave);
 
   const demoEvents = options.events ?? [];
   const severities: SecurityEvent['severity'][] = ['critical', 'high', 'medium', 'low', 'info'];
@@ -410,6 +454,8 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     dispose(): void {
       sceneApi.stop();
       window.removeEventListener('resize', resize);
+      canvas.removeEventListener('mousemove', onHoverMove);
+      canvas.removeEventListener('mouseleave', onHoverLeave);
       observer?.disconnect();
       if (eventTimer) window.clearInterval(eventTimer);
       controls.dispose();

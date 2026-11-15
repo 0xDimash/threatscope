@@ -145,6 +145,14 @@ function route(): void {
 backBtn.addEventListener('click', () => {
   window.location.hash = '#/';
 });
+canvas.addEventListener('click', (event: MouseEvent) => {
+  if (!active) return;
+  const id = active.pick(event.clientX, event.clientY);
+  if (id) {
+    active.focusAsset(id);
+    activeHud?.selectAsset(id, null);
+  }
+});
 settingsBtn.addEventListener('click', openSettingsModal);
 window.addEventListener('hashchange', route);
 route();
