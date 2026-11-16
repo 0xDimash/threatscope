@@ -103,9 +103,14 @@ export function createHud(host: HTMLElement): HudApi {
     timeEl.textContent = timeLabel(ev.ts);
     row.addEventListener('click', () => {
       if (ev.dst.asset_id) {
-        // notify via custom event; main.ts can listen
         host.dispatchEvent(new CustomEvent('hud:select', { detail: ev.dst.asset_id }));
       }
+    });
+    row.addEventListener('mouseenter', () => {
+      if (ev.dst.asset_id) host.dispatchEvent(new CustomEvent('hud:hover', { detail: ev.dst.asset_id }));
+    });
+    row.addEventListener('mouseleave', () => {
+      host.dispatchEvent(new CustomEvent('hud:hover', { detail: null }));
     });
     return row;
   }

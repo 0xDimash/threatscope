@@ -35,4 +35,5 @@ export interface CityScene {
   pick(clientX: number, clientY: number): string | null;
   focusAsset(id: string, distance?: number): void;
   spawnArc?(event: SecurityEvent): void;
+  highlight?(id: string | null): void;
 }

@@ -547,6 +547,21 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     spawnArc(event: SecurityEvent): void {
       arcs.spawn(event);
     },
+    highlight(id: string | null): void {
+      if (id === hoveredId) return;
+      if (hoveredId) {
+        const m = materialById.get(hoveredId);
+        if (m) m.opacity = 1.0;
+      }
+      hoveredId = id;
+      if (id) {
+        const m = materialById.get(id);
+        if (m) m.opacity = 0.45;
+        canvas.style.cursor = 'pointer';
+      } else {
+        canvas.style.cursor = '';
+      }
+    },
   };
 
   return sceneApi;

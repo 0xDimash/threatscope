@@ -115,6 +115,9 @@ function openSpace(spaceId: string): void {
         scene.focusAsset(e.detail);
         hud.selectAsset(e.detail, null);
       });
+      hudHost.addEventListener('hud:hover', (e: any) => {
+        scene.highlight?.(e.detail);
+      });
     }
   }
 }
