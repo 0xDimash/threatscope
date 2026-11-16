@@ -332,6 +332,16 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   let elapsed = 0;
   let eventTimer = 0;
 
+  // smooth focus animation
+  let focusAnim: {
+    fromPos: Vector3;
+    fromTarget: Vector3;
+    toPos: Vector3;
+    toTarget: Vector3;
+    t: number;
+    duration: number;
+  } | null = null;
+
   function viewportSize(): { width: number; height: number } {
     const rect = canvas.getBoundingClientRect();
     return { width: Math.max(1, Math.round(rect.width || window.innerWidth)), height: Math.max(1, Math.round(rect.height || window.innerHeight)) };
@@ -355,7 +365,21 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   function render(): void {
     const delta = Math.min(0.05, clock.getDelta());
     elapsed += delta;
-    controls.update();
+    if (focusAnim) {
+      controls.enableDamping = false;
+      focusAnim.t = Math.min(1, focusAnim.t + delta / focusAnim.duration);
+      const e = 1 - Math.pow(1 - focusAnim.t, 3);
+      camera.position.lerpVectors(focusAnim.fromPos, focusAnim.toPos, e);
+      controls.target.lerpVectors(focusAnim.fromTarget, focusAnim.toTarget, e);
+      controls.update();
+      if (focusAnim.t >= 1) {
+        focusAnim = null;
+        controls.enableDamping = true;
+      }
+    } else {
+      controls.enableDamping = true;
+      controls.update();
+    }
     if (hoveredId) {
       const m = materialById.get(hoveredId);
       if (m) m.opacity = 0.4 + 0.2 * Math.sin(elapsed * 4);
@@ -473,9 +497,14 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     },
     resize,
     resetView(): void {
-      camera.position.copy(INITIAL_POS);
-      controls.target.copy(INITIAL_TARGET);
-      controls.update();
+      focusAnim = {
+        fromPos: camera.position.clone(),
+        fromTarget: controls.target.clone(),
+        toPos: INITIAL_POS.clone(),
+        toTarget: INITIAL_TARGET.clone(),
+        t: 0,
+        duration: 0.7,
+      };
     },
     getStats(): SceneStats {
       const frameMs = frameTimes.length === 0 ? 0 : frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length;
@@ -505,9 +534,15 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
       const dev = DEVICES.find((d) => d.id === id);
       if (!dev) return;
       const target = new Vector3(dev.pos.x, dev.pos.y + dev.size.y / 2, dev.pos.z);
-      controls.target.copy(target);
-      camera.position.copy(target).add(new Vector3(4, 3, 4));
-      controls.update();
+      const toPos = target.clone().add(new Vector3(4, 3, 4));
+      focusAnim = {
+        fromPos: camera.position.clone(),
+        fromTarget: controls.target.clone(),
+        toPos,
+        toTarget: target,
+        t: 0,
+        duration: 0.7,
+      };
     },
     spawnArc(event: SecurityEvent): void {
       arcs.spawn(event);
