@@ -267,7 +267,71 @@ body {
   text-align: right;
 }
 
-/* ---------- room labels ---------- */
+/* ---------- HUD mobile ---------- */
+
+.hud-toggle {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 16;
+  padding: 10px 16px;
+  border: 1px solid #ffffff;
+  border-radius: 6px;
+  background: #000000;
+  color: #ffffff;
+  font-family: 'SF Mono', Consolas, Menlo, monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+  display: none;
+}
+
+.hud-toggle.open {
+  background: #ffffff;
+  color: #000000;
+}
+
+@media (max-width: 768px) {
+  .hud-banner {
+    right: 18px;
+    font-size: 10px;
+    gap: 8px;
+    padding: 6px 10px;
+  }
+  .hud-banner-counts {
+    display: none;
+  }
+  .hud-banner-kill {
+    gap: 4px;
+  }
+  .hud-kill {
+    font-size: 9px;
+  }
+  .hud-panel {
+    top: auto;
+    right: 18px;
+    left: 18px;
+    bottom: 60px;
+    width: auto;
+    max-height: 50vh;
+    transform: translateY(110%);
+    transition: transform 0.2s ease;
+  }
+  .hud-panel.open {
+    transform: translateY(0);
+  }
+  .hud-toggle {
+    display: block;
+  }
+  .hud-detail {
+    left: 18px;
+    right: 18px;
+    width: auto;
+    bottom: 60px;
+  }
+}
 .room-label {
   position: fixed;
   top: 0;
