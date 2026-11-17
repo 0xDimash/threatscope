@@ -321,6 +321,21 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     meta: {},
   });
 
+  // initial arc so the space isn't empty on load
+  arcs.spawn({
+    id: 'room-evt-0',
+    ts: new Date().toISOString(),
+    type: 'anomaly',
+    severity: 'high',
+    src: { ip: '203.0.113.9', host: null, asset_id: null },
+    dst: { ip: '10.0.0.1', host: 'Server Rack', asset_id: 'room-rack' },
+    description: null,
+    mitre: null,
+    risk_delta: 2.0,
+    raw_source: 'demo',
+    meta: {},
+  });
+
   const renderContext: RenderContext = createRenderContext(renderer, scene, camera, {
     bloom: false,
   });
