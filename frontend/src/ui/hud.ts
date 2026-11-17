@@ -20,7 +20,10 @@ const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
 function timeLabel(ts: string): string {
   try {
     const d = new Date(ts);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const diff = Math.max(0, (Date.now() - d.getTime()) / 1000);
+    if (diff < 60) return `${Math.floor(diff)}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   } catch {
     return ts;
   }

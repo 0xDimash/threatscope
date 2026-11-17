@@ -3,6 +3,7 @@ import './styles/menu.css';
 import { createRoomScene } from './scene/room';
 import { fixtureEvents } from './data/contract-fixtures';
 import type { CityScene } from './scene/types';
+import type { RiskState } from './types/contract';
 import { createHud, type HudApi } from './ui/hud';
 import { renderMenu, showNewSpaceNotice } from './ui/menu';
 import { SPACES } from './ui/spaces';
@@ -89,13 +90,16 @@ function openSpace(spaceId: string): void {
       activeHud = hud;
       // feed fixture events + a mock aggregate state
       const counts = { info: 0, low: 0, medium: 0, high: 0, critical: 0 };
+      const deviceCounts = new Map<string, number>();
       let idx = 0;
       const feed = window.setInterval(() => {
         const ev = fixtureEvents[idx % fixtureEvents.length];
         // remap dst to a room device so arcs/HUD line up
         const devIds = ['room-rack', 'room-pc1', 'room-pc2', 'room-nas', 'room-iot', 'room-cam'];
-        const ev2 = { ...ev, id: `hud-${idx}`, dst: { ...ev.dst, asset_id: devIds[idx % devIds.length] } };
+        const target = devIds[idx % devIds.length];
+        const ev2 = { ...ev, id: `hud-${idx}`, dst: { ...ev.dst, asset_id: target } };
         counts[ev.severity] += 1;
+        deviceCounts.set(target, (deviceCounts.get(target) ?? 0) + 1);
         hud.addEvent(ev2);
         const total = counts.info + counts.low + counts.medium + counts.high + counts.critical;
         const threatLevel =
@@ -111,9 +115,24 @@ function openSpace(spaceId: string): void {
       }, 1500);
       // store timer on scene? store on window for cleanup
       (active as any).__hudTimer = feed;
+      const buildRisk = (id: string): RiskState => {
+        const n = deviceCounts.get(id) ?? 0;
+        const risk = Math.min(100, n * 6 + (id.length % 5));
+        const state: RiskState['state'] =
+          risk >= 80 ? 'compromised' : risk >= 55 ? 'critical' : risk >= 30 ? 'elevated' : 'ok';
+        return {
+          asset_id: id,
+          risk,
+          state,
+          events_24h: n,
+          last_event_ts: new Date().toISOString(),
+          top_types: ['anomaly'],
+        };
+      };
+
       hudHost.addEventListener('hud:select', (e: any) => {
         scene.focusAsset(e.detail);
-        hud.selectAsset(e.detail, null);
+        hud.selectAsset(e.detail, buildRisk(e.detail));
       });
       hudHost.addEventListener('hud:hover', (e: any) => {
         scene.highlight?.(e.detail);
