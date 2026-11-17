@@ -1,7 +1,6 @@
 import './styles/scene.css';
 import './styles/menu.css';
 import { createRoomScene } from './scene/room';
-import { fixtureEvents } from './data/contract-fixtures';
 import { connectFeed, fetchState, fetchAssetRisk, type AggregateState } from './data';
 import type { CityScene } from './scene/types';
 import type { RiskState, SecurityEvent } from './types/contract';
@@ -30,7 +29,7 @@ const modalRoot = requireElement<HTMLElement>('#modal-root', '#modal-root');
 type SceneFactory = (canvas: HTMLCanvasElement, options: { bloom: boolean; labels: boolean }) => CityScene;
 
 const FACTORIES: Record<string, SceneFactory> = {
-  room: (target, options) => createRoomScene(target, { ...options, events: fixtureEvents, eventIntervalMs: 1400 }),
+  room: (target, options) => createRoomScene(target, options),
 };
 
 let active: CityScene | null = null;
