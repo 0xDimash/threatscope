@@ -304,9 +304,20 @@ body {
   }
 }
 
+/* phones held sideways: the counters no longer fit next to the side panel */
+@media (max-width: 900px) {
+  .hud-banner-counts {
+    display: none;
+  }
+  .hud-banner-level {
+    white-space: nowrap;
+  }
+}
+
 @media (max-width: 768px) {
   .hud-banner {
-    right: 18px;
+    left: 12px;
+    right: 12px;
     font-size: 10px;
     gap: 8px;
     padding: 6px 10px;
@@ -322,25 +333,33 @@ body {
   }
   .hud-panel {
     top: auto;
-    right: 18px;
-    left: 18px;
-    bottom: 60px;
+    right: 12px;
+    left: 12px;
+    bottom: 64px;
     width: auto;
-    max-height: 50vh;
-    transform: translateY(110%);
-    transition: transform 0.2s ease;
+    /* a real sheet height, otherwise translateY(110%) leaves a sliver on screen */
+    height: min(58vh, 460px);
+    max-height: none;
+    transform: translateY(calc(100% + 96px));
+    transition: transform 0.24s ease;
   }
   .hud-panel.open {
     transform: translateY(0);
   }
   .hud-toggle {
     display: block;
+    right: 12px;
+    bottom: 12px;
   }
+  /* the detail card sits above the scene, never under the sheet */
   .hud-detail {
-    left: 18px;
-    right: 18px;
+    top: 104px;
+    bottom: auto;
+    left: 12px;
+    right: 12px;
     width: auto;
-    bottom: 60px;
+    max-height: 46vh;
+    overflow-y: auto;
   }
 }
 .room-label {

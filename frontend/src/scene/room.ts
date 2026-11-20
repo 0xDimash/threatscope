@@ -184,6 +184,8 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   const camera = new PerspectiveCamera(55, canvas.clientWidth / Math.max(1, canvas.clientHeight), 0.1, 200);
   const INITIAL_POS = new Vector3(9, 7, 9);
   const INITIAL_TARGET = new Vector3(0, 1.5, 0);
+  // Portrait crops the room horizontally; step back instead of widening the lens.
+  const BASE_OFFSET = INITIAL_POS.clone().sub(INITIAL_TARGET);
   camera.position.copy(INITIAL_POS);
 
   const controls = new OrbitControls(camera, canvas);
@@ -341,7 +343,12 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     let bufH = Math.round(height * dpr);
     if (bufW > MAX) { const s = MAX / bufW; bufW = MAX; bufH = Math.round(bufH * s); }
     if (bufH > MAX) { const s = MAX / bufH; bufH = MAX; bufW = Math.round(bufW * s); }
-    camera.aspect = width / height;
+    const aspect = width / height;
+    camera.aspect = aspect;
+    if (!focusAnim && aspect < 1.15) {
+      const back = Math.min(1.8, 1.15 / Math.max(0.4, aspect));
+      camera.position.copy(INITIAL_TARGET).add(BASE_OFFSET.clone().multiplyScalar(back));
+    }
     camera.updateProjectionMatrix();
     renderContext.setSize(bufW, bufH);
     arcs.resize(bufW, bufH);
