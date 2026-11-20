@@ -293,6 +293,17 @@ body {
   color: #000000;
 }
 
+/* between the side panel and the mobile sheet the banner gets tight:
+   keep one line by dropping the kill-chain chips, never wrapping the counts */
+@media (max-width: 1100px) {
+  .hud-banner-kill {
+    display: none;
+  }
+  .hud-banner-counts {
+    white-space: nowrap;
+  }
+}
+
 @media (max-width: 768px) {
   .hud-banner {
     right: 18px;
