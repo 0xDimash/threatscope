@@ -173,8 +173,10 @@ export function createHud(host: HTMLElement): HudApi {
         </div>
         <div class="hud-detail-body">
           ${risk ? `
-            <div class="hud-detail-row"><span>risk</span><span>${risk.risk.toFixed(1)} / 100</span></div>
-            <div class="hud-detail-row"><span>state</span><span>${risk.state}</span></div>
+            ${risk.risk > 0
+              ? `<div class="hud-detail-row"><span>risk</span><span>${risk.risk.toFixed(1)} / 100</span></div>
+                 <div class="hud-detail-row"><span>state</span><span>${risk.state}</span></div>`
+              : '<div class="hud-detail-row"><span>risk</span><span>score pending</span></div>'}
             <div class="hud-detail-row"><span>events 24h</span><span>${risk.events_24h}</span></div>
             <div class="hud-detail-row"><span>top types</span><span>${risk.top_types.join(', ') || '—'}</span></div>
           ` : '<div class="hud-detail-row"><span>no risk data</span><span>—</span></div>'}
