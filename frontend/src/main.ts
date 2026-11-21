@@ -1,11 +1,10 @@
 import './styles/scene.css';
 import './styles/menu.css';
 import { createRoomScene } from './scene/room';
-import { fixtureEvents } from './data/contract-fixtures';
-import { connectFeed, type AggregateState, type FeedStatus } from './data';
-import type { SecurityEvent } from './types/contract';
+import { connectFeed, fetchState, fetchAssetRisk, type AggregateState } from './data';
 import type { CityScene } from './scene/types';
-import type { RiskState } from './types/contract';
+import type { RiskState, SecurityEvent } from './types/contract';
+import type { FeedStatus } from './data';
 import { createHud, type HudApi } from './ui/hud';
 import { renderMenu, showNewSpaceNotice } from './ui/menu';
 import { SPACES } from './ui/spaces';
@@ -30,7 +29,7 @@ const modalRoot = requireElement<HTMLElement>('#modal-root', '#modal-root');
 type SceneFactory = (canvas: HTMLCanvasElement, options: { bloom: boolean; labels: boolean }) => CityScene;
 
 const FACTORIES: Record<string, SceneFactory> = {
-  room: (target, options) => createRoomScene(target, { ...options, events: fixtureEvents, eventIntervalMs: 1400 }),
+  room: (target, options) => createRoomScene(target, options),
 };
 
 let active: CityScene | null = null;
@@ -44,6 +43,7 @@ function settingsOptions(): { bloom: boolean; labels: boolean } {
 
 function disposeActive(): void {
   if (active && (active as any).__hudTimer) window.clearInterval((active as any).__hudTimer);
+  if (active && (active as any).__stopFeed) (active as any).__stopFeed();
   active?.dispose();
   active = null;
   activeHud?.dispose();
@@ -90,33 +90,7 @@ function openSpace(spaceId: string): void {
     if (hudHost) {
       const hud = createHud(hudHost);
       activeHud = hud;
-      // feed fixture events + a mock aggregate state
-      const counts = { info: 0, low: 0, medium: 0, high: 0, critical: 0 };
       const deviceCounts = new Map<string, number>();
-      let idx = 0;
-      const feed = window.setInterval(() => {
-        const ev = fixtureEvents[idx % fixtureEvents.length];
-        // remap dst to a room device so arcs/HUD line up
-        const devIds = ['room-rack', 'room-pc1', 'room-pc2', 'room-nas', 'room-iot', 'room-cam'];
-        const target = devIds[idx % devIds.length];
-        const ev2 = { ...ev, id: `hud-${idx}`, dst: { ...ev.dst, asset_id: target } };
-        counts[ev.severity] += 1;
-        deviceCounts.set(target, (deviceCounts.get(target) ?? 0) + 1);
-        hud.addEvent(ev2);
-        const total = counts.info + counts.low + counts.medium + counts.high + counts.critical;
-        const threatLevel =
-          counts.critical > 0 ? 'severe' : counts.high > 0 ? 'high' : counts.medium > 0 ? 'elevated' : 'guarded';
-        hud.setState({
-          threat_level: threatLevel as any,
-          counts: { ...counts },
-          compromised_assets: counts.critical > 2 ? 1 : 0,
-          kill_chain: { reconnaissance: Math.min(1, total / 20), initial_access: Math.min(1, total / 30), c2: 0.2, exploitation: 0.1, lateral_movement: 0, impact: 0 },
-          top_types: [{ type: ev.type, count: 1 }],
-        });
-        idx += 1;
-      }, 1500);
-      // store timer on scene? store on window for cleanup
-      (active as any).__hudTimer = feed;
       const buildRisk = (id: string): RiskState => {
         const n = deviceCounts.get(id) ?? 0;
         const risk = Math.min(100, n * 6 + (id.length % 5));
@@ -132,9 +106,35 @@ function openSpace(spaceId: string): void {
         };
       };
 
+      // Initial state from the backend.
+      fetchState().then((st) => hud.setState(st)).catch(() => {});
+
+      // Live feed via the real WebSocket client.
+      const stopFeed = connectFeed({
+        onFrame(frame) {
+          if (frame.kind === 'event') {
+            const ev = frame.data;
+            const target = ev.dst.asset_id;
+            if (target) {
+              deviceCounts.set(target, (deviceCounts.get(target) ?? 0) + 1);
+              scene.spawnArc?.(ev);
+            }
+            hud.addEvent(ev);
+          } else if (frame.kind === 'state') {
+            hud.setState(frame.data);
+          } else if (frame.kind === 'risk') {
+            // Update detail card if the selected asset matches.
+            // (No-op here; selectAsset is called on click.)
+          }
+        },
+      });
+      (active as any).__stopFeed = stopFeed;
+
       hudHost.addEventListener('hud:select', (e: any) => {
         scene.focusAsset(e.detail);
         hud.selectAsset(e.detail, buildRisk(e.detail));
+        // try real risk from backend
+        fetchAssetRisk(e.detail).then((r) => hud.selectAsset(e.detail, r)).catch(() => {});
       });
       hudHost.addEventListener('hud:hover', (e: any) => {
         scene.highlight?.(e.detail);

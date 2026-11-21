@@ -184,6 +184,8 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   const camera = new PerspectiveCamera(55, canvas.clientWidth / Math.max(1, canvas.clientHeight), 0.1, 200);
   const INITIAL_POS = new Vector3(9, 7, 9);
   const INITIAL_TARGET = new Vector3(0, 1.5, 0);
+  // Portrait crops the room horizontally; step back instead of widening the lens.
+  const BASE_OFFSET = INITIAL_POS.clone().sub(INITIAL_TARGET);
   camera.position.copy(INITIAL_POS);
 
   const controls = new OrbitControls(camera, canvas);
@@ -306,21 +308,6 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     viewportHeight: canvas.clientHeight,
   });
 
-  // initial arc so the space isn't empty on load
-  arcs.spawn({
-    id: 'room-evt-0',
-    ts: new Date().toISOString(),
-    type: 'anomaly',
-    severity: 'high',
-    src: { ip: '203.0.113.9', host: null, asset_id: null },
-    dst: { ip: '10.0.0.1', host: 'Server Rack', asset_id: 'room-rack' },
-    description: null,
-    mitre: null,
-    risk_delta: 2.0,
-    raw_source: 'demo',
-    meta: {},
-  });
-
   const renderContext: RenderContext = createRenderContext(renderer, scene, camera, {
     bloom: false,
   });
@@ -356,7 +343,12 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     let bufH = Math.round(height * dpr);
     if (bufW > MAX) { const s = MAX / bufW; bufW = MAX; bufH = Math.round(bufH * s); }
     if (bufH > MAX) { const s = MAX / bufH; bufH = MAX; bufW = Math.round(bufW * s); }
-    camera.aspect = width / height;
+    const aspect = width / height;
+    camera.aspect = aspect;
+    if (!focusAnim && aspect < 1.15) {
+      const back = Math.min(1.8, 1.15 / Math.max(0.4, aspect));
+      camera.position.copy(INITIAL_TARGET).add(BASE_OFFSET.clone().multiplyScalar(back));
+    }
     camera.updateProjectionMatrix();
     renderContext.setSize(bufW, bufH);
     arcs.resize(bufW, bufH);
@@ -444,29 +436,6 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   canvas.addEventListener('mousemove', onHoverMove);
   canvas.addEventListener('mouseleave', onHoverLeave);
 
-  const demoEvents = options.events ?? [];
-  const severities: SecurityEvent['severity'][] = ['critical', 'high', 'medium', 'low', 'info'];
-  if (demoEvents.length > 0 || true) {
-    let index = 0;
-    eventTimer = window.setInterval(() => {
-      const dev = DEVICES[Math.floor(Math.random() * DEVICES.length)];
-      const evt: SecurityEvent = {
-        id: `room-evt-${index}`,
-        ts: new Date().toISOString(),
-        type: 'anomaly',
-        severity: severities[index % severities.length],
-        src: { ip: '203.0.113.9', host: null, asset_id: null },
-        dst: { ip: '10.0.0.1', host: dev.name, asset_id: dev.id },
-        description: null,
-        mitre: null,
-        risk_delta: 2.0,
-        raw_source: 'demo',
-        meta: {},
-      };
-      arcs.spawn(evt);
-      index += 1;
-    }, options.eventIntervalMs ?? 1300);
-  }
 
   const sceneApi: CityScene = {
     assetIds: DEVICES.map((d) => d.id),

@@ -30,7 +30,7 @@ function timeLabel(ts: string): string {
 }
 
 export function createHud(host: HTMLElement): HudApi {
-  // Top banner
+  // Top banner (compact on mobile)
   const banner = document.createElement('div');
   banner.className = 'hud-banner';
   banner.innerHTML = `
@@ -60,6 +60,17 @@ export function createHud(host: HTMLElement): HudApi {
   detail.className = 'hud-detail';
   detail.hidden = true;
   host.appendChild(detail);
+
+  // Mobile toggle for the event panel
+  const toggle = document.createElement('button');
+  toggle.className = 'hud-toggle';
+  toggle.type = 'button';
+  toggle.textContent = 'Events';
+  toggle.addEventListener('click', () => {
+    panel.classList.toggle('open');
+    toggle.classList.toggle('open', panel.classList.contains('open'));
+  });
+  host.appendChild(toggle);
 
   // Filter state
   const activeFilters = new Set<Severity>(SEVERITIES);
@@ -177,6 +188,7 @@ export function createHud(host: HTMLElement): HudApi {
       banner.remove();
       panel.remove();
       detail.remove();
+      toggle.remove();
     },
   };
 

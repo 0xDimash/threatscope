@@ -267,7 +267,101 @@ body {
   text-align: right;
 }
 
-/* ---------- room labels ---------- */
+/* ---------- HUD mobile ---------- */
+
+.hud-toggle {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 16;
+  padding: 10px 16px;
+  border: 1px solid #ffffff;
+  border-radius: 6px;
+  background: #000000;
+  color: #ffffff;
+  font-family: 'SF Mono', Consolas, Menlo, monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+  display: none;
+}
+
+.hud-toggle.open {
+  background: #ffffff;
+  color: #000000;
+}
+
+/* between the side panel and the mobile sheet the banner gets tight:
+   keep one line by dropping the kill-chain chips, never wrapping the counts */
+@media (max-width: 1100px) {
+  .hud-banner-kill {
+    display: none;
+  }
+  .hud-banner-counts {
+    white-space: nowrap;
+  }
+}
+
+/* phones held sideways: the counters no longer fit next to the side panel */
+@media (max-width: 900px) {
+  .hud-banner-counts {
+    display: none;
+  }
+  .hud-banner-level {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .hud-banner {
+    left: 12px;
+    right: 12px;
+    font-size: 10px;
+    gap: 8px;
+    padding: 6px 10px;
+  }
+  .hud-banner-counts {
+    display: none;
+  }
+  .hud-banner-kill {
+    gap: 4px;
+  }
+  .hud-kill {
+    font-size: 9px;
+  }
+  .hud-panel {
+    top: auto;
+    right: 12px;
+    left: 12px;
+    bottom: 64px;
+    width: auto;
+    /* a real sheet height, otherwise translateY(110%) leaves a sliver on screen */
+    height: min(58vh, 460px);
+    max-height: none;
+    transform: translateY(calc(100% + 96px));
+    transition: transform 0.24s ease;
+  }
+  .hud-panel.open {
+    transform: translateY(0);
+  }
+  .hud-toggle {
+    display: block;
+    right: 12px;
+    bottom: 12px;
+  }
+  /* the detail card sits above the scene, never under the sheet */
+  .hud-detail {
+    top: 104px;
+    bottom: auto;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: 46vh;
+    overflow-y: auto;
+  }
+}
 .room-label {
   position: fixed;
   top: 0;

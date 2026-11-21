@@ -69,7 +69,14 @@ export function createRoomArcsLayer(options: {
   function destinationPosition(event: SecurityEvent): Vector3 | null {
     const id = event.dst.asset_id;
     if (id && devicePositions.has(id)) return devicePositions.get(id)!.clone();
-    return null;
+    // Fallback for real backend events whose asset_ids don't match this room:
+    // hash the destination to a stable device so every event still renders.
+    const ids = [...devicePositions.keys()];
+    if (ids.length === 0) return null;
+    const key = id ?? event.dst.ip ?? event.dst.host ?? '';
+    const idx = Math.abs(hashString(key)) % ids.length;
+    const chosen = devicePositions.get(ids[idx]);
+    return chosen ? chosen.clone() : null;
   }
 
   function sourcePosition(event: SecurityEvent): Vector3 {
@@ -166,4 +173,12 @@ export function createRoomArcsLayer(options: {
   }
 
   return { group, spawn, update, resize, dispose };
+}
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
 }
