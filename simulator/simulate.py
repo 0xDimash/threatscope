@@ -15,18 +15,38 @@ import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
-ASSETS: list[dict[str, Any]] = [
-    {"id": "asset-egov-portal", "ip": "10.10.4.21", "host": "egov-portal"},
-    {"id": "asset-akimat-portal", "ip": "10.10.4.22", "host": "akimat-portal"},
-    {"id": "asset-municipal-dc", "ip": "10.10.1.10", "host": "municipal-dc"},
-    {"id": "asset-water-scada", "ip": "10.20.0.5", "host": "water-scada"},
-    {"id": "asset-power-scada", "ip": "10.20.0.6", "host": "power-scada"},
-    {"id": "asset-traffic-ctl", "ip": "10.20.0.7", "host": "traffic-ctl"},
-    {"id": "asset-cctv-net", "ip": "10.30.0.0/16", "host": "cctv-net"},
-    {"id": "asset-citizen-db", "ip": "10.10.2.5", "host": "citizen-db"},
-]
+DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "assets.json"
+
+
+def load_assets() -> list[dict[str, Any]]:
+    """Targets come from the shared inventory, so every dst.asset_id really exists.
+
+    Only addressable assets (those with an ip) can be attacked; districts and
+    inventory groups are map geometry, not hosts.
+    """
+    try:
+        payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise SystemExit(f"asset inventory not found: {DATA_FILE}") from exc
+    items = payload["assets"] if isinstance(payload, dict) else payload
+    assets = []
+    for item in items:
+        ip = item.get("ip")
+        if not ip:
+            continue
+        host = "".join(c if c.isalnum() else "-" for c in item["name"].lower()).strip("-")
+        while "--" in host:
+            host = host.replace("--", "-")
+        assets.append({"id": item["id"], "ip": ip, "host": host})
+    if not assets:
+        raise SystemExit(f"no addressable assets in {DATA_FILE}")
+    return assets
+
+
+ASSETS: list[dict[str, Any]] = load_assets()
 
 ATTACKS: list[dict[str, Any]] = [
     {"type": "port_scan", "severity": "low", "tactic": "discovery", "technique_id": "T1046", "technique": "Network Service Discovery"},
