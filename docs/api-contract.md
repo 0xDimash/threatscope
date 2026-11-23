@@ -92,7 +92,7 @@ backend stores it only so layouts are reproducible.
   "threat_level": "elevated",   // low | guarded | elevated | high | severe
   "counts": { "info": 120, "low": 40, "medium": 18, "high": 6, "critical": 2 },
   "compromised_assets": 3,
-  "kill_chain": {               // 0..1 progress per stage
+  "kill_chain": {               // 0..1 progress per stage, from event types in the last 24 h
     "reconnaissance": 1.0, "initial_access": 0.8, "c2": 0.6,
     "exploitation": 0.4, "lateral_movement": 0.2, "impact": 0.1
   },

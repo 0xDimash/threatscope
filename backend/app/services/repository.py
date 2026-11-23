@@ -23,8 +23,8 @@ from sqlalchemy.orm import Session
 
 from app.core.types import format_iso, parse_iso
 from app.models import Asset, Event, Link, RiskSnapshot
-from app.schemas.contract import KILL_CHAIN_STAGES, SEVERITIES
-from app.services import risk
+from app.schemas.contract import SEVERITIES
+from app.services import kill_chain, risk
 from app.services.mapping import apply_mapping
 
 #: Upper bounds for the city-wide threat level, derived from the highest asset score.
@@ -293,8 +293,8 @@ def aggregate_state(session: Session) -> dict[str, Any]:
     """City-wide aggregate for ``GET /api/state``.
 
     ``threat_level`` and ``compromised_assets`` come from the latest per-asset snapshots;
-    ``counts`` and ``top_types`` remain straight folds over the event store. ``kill_chain``
-    stays zeroed until the correlation engine lands.
+    ``counts`` and ``top_types`` remain straight folds over the event store. ``kill_chain`` is
+    derived from event types inside the same 24 h window the risk model uses.
     """
     counts = _counts_by_severity(session)
     top_types = session.execute(
@@ -305,10 +305,19 @@ def aggregate_state(session: Session) -> dict[str, Any]:
     ).all()
     snapshots = _latest_snapshots(session)
 
+    window_start = datetime.now(timezone.utc) - timedelta(hours=risk.WINDOW_HOURS)
+    staged_types = session.execute(
+        select(Event.type, func.count(Event.id))
+        .where(Event.ts >= window_start)
+        .group_by(Event.type)
+    ).all()
+
     return {
         "threat_level": _threat_level(score for score, _ in snapshots),
         "counts": counts,
         "compromised_assets": sum(1 for _, state in snapshots if state == "compromised"),
-        "kill_chain": {stage: 0.0 for stage in KILL_CHAIN_STAGES},
+        "kill_chain": kill_chain.progress(
+            {event_type: int(total) for event_type, total in staged_types}
+        ),
         "top_types": [{"type": event_type, "count": int(total)} for event_type, total in top_types],
     }

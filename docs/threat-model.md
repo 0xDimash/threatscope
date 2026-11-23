@@ -12,8 +12,8 @@ Also implemented: resolving event endpoints to inventory assets (`backend/app/se
 and accumulating those events into a per-asset `RiskState`
 (`backend/app/services/risk.py`, `risk_snapshots`).
 
-Not implemented yet: correlation into incidents and kill-chain progress. Those live in
-`backend/app/services` and are tracked separately.
+Not implemented yet: correlation into incidents. Kill-chain progress is derived directly from
+event types (below), but it does not yet group events into a single narrative incident.
 
 ## Severity scale
 
@@ -109,6 +109,28 @@ assets whose latest snapshot is `compromised`.
 - The window is anchored at wall-clock "now". Replaying a capture older than 24 hours is stored
   and visible in the timeline, but scores zero until it is replayed with fresh timestamps. The
   simulator emits `now`, so a live demo is unaffected.
+
+## Kill-chain progress
+
+`GET /api/state.kill_chain` is no longer a placeholder. `backend/app/services/kill_chain.py`
+maps each contract event **type** to one stage and reports progress as
+`min(1, count_in_stage / 5)`, rounded to two decimals. The count uses the same 24-hour
+wall-clock window as the risk model, so the meters describe what is happening now and can fall
+again — an old capture does not leave the chain permanently "complete".
+
+| Stage | Contract event types |
+|---|---|
+| `reconnaissance` | `recon`, `port_scan` |
+| `initial_access` | `phishing`, `credential_attack`, `web_attack` |
+| `c2` | `malware`, `c2_beacon` |
+| `exploitation` | `exploitation`, `ransomware` |
+| `lateral_movement` | `lateral_movement` |
+| `impact` | `ddos`, `defacement`, `data_exfiltration`, `scada_intrusion` |
+
+Five events in a stage take its meter to 1.0; one event reads 0.2. Stages with no matching
+events are still present with `0.0`, so the API shape never changes. Unknown or missing types
+are ignored — a type we cannot interpret must not advance the chain. This is a *progress
+indicator*, not an incident: it does not claim that five recon events are one coherent attack.
 
 ## Zeek `notice.log` mapping
 
