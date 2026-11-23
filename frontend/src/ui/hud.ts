@@ -12,6 +12,7 @@ export interface HudApi {
   addEvent(event: SecurityEvent): void;
   setState(state: AggregateState): void;
   selectAsset(id: string | null, risk?: RiskState | null): void;
+  updateRisk(assetId: string, risk: RiskState): void;
   dispose(): void;
 }
 
@@ -56,6 +57,7 @@ export function createHud(host: HTMLElement): HudApi {
   const eventsEl = panel.querySelector<HTMLElement>('.hud-events')!;
 
   // Detail card
+  let currentId: string | null = null;
   const detail = document.createElement('div');
   detail.className = 'hud-detail';
   detail.hidden = true;
@@ -160,6 +162,7 @@ export function createHud(host: HTMLElement): HudApi {
         .join('');
     },
     selectAsset(id: string | null, risk: RiskState | null = null): void {
+      currentId = id;
       if (!id) {
         detail.hidden = true;
         detail.innerHTML = '';
@@ -184,7 +187,14 @@ export function createHud(host: HTMLElement): HudApi {
       `;
       detail.querySelector<HTMLButtonElement>('.hud-detail-close')?.addEventListener('click', () => {
         detail.hidden = true;
+        currentId = null;
       });
+    },
+    updateRisk(assetId: string, risk: RiskState): void {
+      if (currentId !== assetId || detail.hidden) {
+        return;
+      }
+      api.selectAsset(assetId, risk);
     },
     dispose(): void {
       banner.remove();
