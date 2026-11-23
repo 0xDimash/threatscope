@@ -12,6 +12,7 @@ from app.core.config import REPO_ROOT
 
 SAMPLE_EVENTS: Path = REPO_ROOT / "contract" / "events.sample.json"
 ZEEK_NOTICE: Path = Path(__file__).parent / "fixtures" / "zeek" / "notice.log"
+SURICATA_EVE: Path = Path(__file__).parent / "fixtures" / "suricata" / "eve.json"
 
 
 def sample_events() -> list[dict[str, Any]]:
@@ -60,6 +61,19 @@ def test_zeek_source_parses_raw_text(client: TestClient) -> None:
     assert {event["raw_source"] for event in stored} == {"zeek"}
 
 
+def test_suricata_source_parses_raw_text(client: TestClient) -> None:
+    raw = SURICATA_EVE.read_text(encoding="utf-8")
+
+    response = client.post("/api/ingest", json={"source": "suricata", "raw": raw})
+
+    assert response.status_code == 200
+    assert response.json() == {"accepted": 3, "stored": 3}
+
+    stored = client.get("/api/events").json()["events"]
+    assert {event["raw_source"] for event in stored} == {"suricata"}
+    assert {event["type"] for event in stored} == {"port_scan", "web_attack", "malware"}
+
+
 def test_source_is_case_insensitive(client: TestClient) -> None:
     raw = ZEEK_NOTICE.read_text(encoding="utf-8")
 
@@ -77,10 +91,11 @@ def test_empty_raw_text_is_accepted_and_stores_nothing(client: TestClient) -> No
 
 
 def test_unknown_source_is_a_client_error(client: TestClient) -> None:
-    response = client.post("/api/ingest", json={"source": "suricata", "raw": "{}"})
+    response = client.post("/api/ingest", json={"source": "syslog", "raw": "{}"})
 
     assert response.status_code == 400
-    assert "zeek" in response.json()["detail"]
+    detail = response.json()["detail"]
+    assert "zeek" in detail and "suricata" in detail
 
 
 def test_unparseable_raw_text_is_a_client_error(client: TestClient) -> None:
