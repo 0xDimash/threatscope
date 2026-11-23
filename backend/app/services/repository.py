@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from app.core.types import format_iso, parse_iso
 from app.models import Asset, Event, Link, RiskSnapshot
 from app.schemas.contract import KILL_CHAIN_STAGES, SEVERITIES
+from app.services.mapping import apply_mapping
 
 #: Provisional mapping from the worst severity present to the city-wide threat level.
 #: The risk engine (phase 3) will replace this with a score-driven level.
@@ -39,8 +40,11 @@ def add_events(session: Session, items: Iterable[dict[str, Any]]) -> int:
 
     Duplicate ids are skipped rather than raising: replaying a capture or a simulator run
     must be safe. The contract forbids reusing an ``id``, so an existing id means "seen it".
+
+    Endpoints are mapped to inventory assets here, once, so adapters stay pure and every
+    source gets the same treatment (``app.services.mapping``).
     """
-    rows = [Event.from_contract(item) for item in items]
+    rows = [Event.from_contract(item) for item in apply_mapping(session, items)]
     if not rows:
         return 0
 
