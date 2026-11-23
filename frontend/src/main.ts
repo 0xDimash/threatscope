@@ -3,7 +3,7 @@ import './styles/menu.css';
 import { createRoomScene } from './scene/room';
 import { connectFeed, fetchState, fetchAssetRisk, type AggregateState } from './data';
 import type { CityScene } from './scene/types';
-import type { RiskState, SecurityEvent } from './types/contract';
+import type { SecurityEvent } from './types/contract';
 import type { FeedStatus } from './data';
 import { createHud, type HudApi } from './ui/hud';
 import { renderMenu, showNewSpaceNotice } from './ui/menu';
@@ -91,20 +91,6 @@ function openSpace(spaceId: string): void {
       const hud = createHud(hudHost);
       activeHud = hud;
       const deviceCounts = new Map<string, number>();
-      const buildRisk = (id: string): RiskState => {
-        const n = deviceCounts.get(id) ?? 0;
-        const risk = Math.min(100, n * 6 + (id.length % 5));
-        const state: RiskState['state'] =
-          risk >= 80 ? 'compromised' : risk >= 55 ? 'critical' : risk >= 30 ? 'elevated' : 'ok';
-        return {
-          asset_id: id,
-          risk,
-          state,
-          events_24h: n,
-          last_event_ts: new Date().toISOString(),
-          top_types: ['anomaly'],
-        };
-      };
 
       // Initial state from the backend.
       fetchState().then((st) => hud.setState(st)).catch(() => {});
@@ -123,8 +109,7 @@ function openSpace(spaceId: string): void {
           } else if (frame.kind === 'state') {
             hud.setState(frame.data);
           } else if (frame.kind === 'risk') {
-            // Update detail card if the selected asset matches.
-            // (No-op here; selectAsset is called on click.)
+            hud.updateRisk(frame.data.asset_id, frame.data);
           }
         },
       });
@@ -132,9 +117,10 @@ function openSpace(spaceId: string): void {
 
       hudHost.addEventListener('hud:select', (e: any) => {
         scene.focusAsset(e.detail);
-        hud.selectAsset(e.detail, buildRisk(e.detail));
-        // try real risk from backend
-        fetchAssetRisk(e.detail).then((r) => hud.selectAsset(e.detail, r)).catch(() => {});
+        // The backend is the only source of risk; no locally invented numbers.
+        fetchAssetRisk(e.detail)
+          .then((r) => hud.selectAsset(e.detail, r))
+          .catch(() => hud.selectAsset(e.detail, null));
       });
       hudHost.addEventListener('hud:hover', (e: any) => {
         scene.highlight?.(e.detail);
