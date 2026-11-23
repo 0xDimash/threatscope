@@ -8,10 +8,12 @@ and this file is wrong.
 
 Implemented: mapping a raw source event to a contract `type`, a `severity`, an optional MITRE
 ATT&CK technique, and a `risk_delta` — for Zeek `notice.log` and Suricata `eve.json` alerts.
-Also implemented: resolving event endpoints to inventory assets (`backend/app/services/mapping.py`).
+Also implemented: resolving event endpoints to inventory assets (`backend/app/services/mapping.py`)
+and accumulating those events into a per-asset `RiskState`
+(`backend/app/services/risk.py`, `risk_snapshots`).
 
-Not implemented yet: risk accumulation and `RiskState`, correlation into incidents/kill-chain
-progress. Those live in `backend/app/services` and are tracked separately.
+Not implemented yet: correlation into incidents and kill-chain progress. Those live in
+`backend/app/services` and are tracked separately.
 
 ## Severity scale
 
@@ -29,6 +31,84 @@ property of the event, not of the asset — criticality weighting happens in the
 `risk_delta` is a contribution on the contract's 0..100 risk scale, before asset-criticality
 weighting. Values are intentionally spaced so that a few `high` events cannot alone saturate an
 asset, while a `critical` event is visible immediately.
+
+## Risk model
+
+Implemented in `backend/app/services/risk.py` (pure arithmetic, no database) and called once per
+successful ingest batch by `repository.ingest_events`. Every destination asset touched by the
+batch gets a new `risk_snapshots` row; assets that were not in the batch keep their previous
+snapshot, so ingest cost does not grow with the size of the city.
+
+### Formula
+
+```
+risk(asset) = min(100, Σ risk_delta × W(criticality) × D(age))
+```
+
+over the events whose destination is the asset and whose timestamp is inside the last 24 hours:
+
+| Term | Definition | Values |
+|---|---|---|
+| `W(c)` | `0.5 + c / 5` | criticality 1 → 0.7, 3 → 1.1, 5 → 1.5 |
+| `D(a)` | `0.5 ** (a / 6)` | age 0 h → 1.0, 6 h → 0.5, 12 h → 0.25, 24 h → 0.0625 |
+| window | wall-clock time, 24 h | events older than 24 h are ignored entirely |
+| clamp | `0..100` | the sum cannot exceed the contract's scale |
+
+**Why these constants.** The weight makes the same event 2.1× as expensive on a criticality-5
+asset as on a criticality-1 one, without letting criticality alone dominate: a `critical`
+event on a crown jewel contributes 37.5, not 100. The six-hour half-life keeps a burst visible
+for roughly one shift; a single critical event falls back below the `ok` boundary after about
+5.5 quiet hours, while sustained activity keeps re-arming the score. A `medium` event on a
+criticality-5 asset contributes 6.0, so background scanning alone needs repetition to matter.
+
+A timestamp slightly in the future is treated as age zero, not as a bonus.
+
+**`events_24h`** counts every event in the window, including `info` events that contribute
+zero risk. **`top_types`** is the three most frequent event types in the window, ties broken
+alphabetically, as a `list[str]`. The snapshot's `ts` is the moment the scoring pass ran.
+
+### Asset states
+
+| Score | `RiskState.state` | Meaning |
+|---|---|---|
+| `0 ≤ risk < 20` | `ok` | background noise or no recent events |
+| `20 ≤ risk < 50` | `elevated` | something is happening; keep watching |
+| `50 ≤ risk < 80` | `critical` | credible, sustained or high-impact activity |
+| `80 ≤ risk ≤ 100` | `compromised` | the asset is effectively lost |
+
+A `critical` event does **not** clamp the asset to `compromised`; it goes through accumulation
+and decay like everything else, so the state can recover. That was the open question from the
+previous phase — the answer is "accumulate, do not latch".
+
+### City-wide threat level
+
+`GET /api/state.threat_level` is derived from the **highest latest asset score**, not from the
+worst event severity in the window. It can therefore go back down after a quiet period.
+
+| Peak latest score | `threat_level` |
+|---|---|
+| `0 ≤ peak < 20` | `low` |
+| `20 ≤ peak < 40` | `guarded` |
+| `40 ≤ peak < 60` | `elevated` |
+| `60 ≤ peak < 80` | `high` |
+| `80 ≤ peak ≤ 100` | `severe` |
+
+`counts` remains a plain severity fold over the whole event store. `compromised_assets` counts
+assets whose latest snapshot is `compromised`.
+
+### Per-batch behaviour
+
+- Scoring runs after the batch is stored and flushed, before the transaction commits.
+- Only assets named in the batch's `dst.asset_id` are rescored. Events are scored by their
+  destination, which is what the contract's `RiskState` describes.
+- A batch costs a constant number of queries — criticalities, events in the window, previous
+  snapshots — never one query per event.
+- Duplicate event ids are skipped and do not trigger a rescore.
+- The WebSocket layer emits one throttled `{"kind": "risk", "data": RiskState}` frame per asset
+  whose score changed, using the same ~1/s gate as the `state` frame.
+- The window is anchored at wall-clock "now". Replaying a capture older than 24 hours is stored
+  and visible in the timeline, but scores zero until it is replayed with fresh timestamps. The
+  simulator emits `now`, so a live demo is unaffected.
 
 ## Zeek `notice.log` mapping
 
@@ -139,6 +219,4 @@ host names that the inventory does not carry, the fix is an inventory alias, not
 
 ## Open questions
 
-- Should a `critical` event clamp an asset to `compromised` immediately, or still go through
-  accumulation? Needed before the risk engine is written.
 - ATT&CK mapping for Suricata signatures: by `signature` prefix, `category`, or both?
