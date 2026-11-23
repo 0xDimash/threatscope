@@ -21,7 +21,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app.api.deps import SessionDep
 from app.api.ws import current_state, manager
-from app.ingest import zeek
+from app.ingest import suricata, zeek
 from app.schemas.api import IngestBatchRequest, IngestRequest, IngestResponse
 from app.services import repository
 
@@ -30,6 +30,7 @@ router = APIRouter()
 #: ``source`` -> adapter. Adapters are pure ``raw_text -> list[SecurityEvent]`` functions.
 ADAPTERS: dict[str, Callable[[str], list[dict[str, Any]]]] = {
     "zeek": zeek.parse_notice_log,
+    "suricata": suricata.parse_eve_json,
 }
 
 
