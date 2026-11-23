@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import assets, events, health, ingest, state, ws
+from app.api import assets, demo, events, health, ingest, state, ws
 from app.core.config import settings
 from app.core.db import init_db
 
@@ -31,4 +31,6 @@ app.include_router(assets.router, prefix="/api")
 app.include_router(events.router, prefix="/api")
 app.include_router(ingest.router, prefix="/api")
 app.include_router(state.router, prefix="/api")
+if settings.demo_feed:
+    app.include_router(demo.router, prefix="/api")
 app.include_router(ws.router)

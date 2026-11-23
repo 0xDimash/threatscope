@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+pysqlite:///./data/threatscope.db"
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     log_level: str = "info"
+    #: Dev-only synthetic threat feed, controlled from ``POST /api/demo/feed``.
+    demo_feed: bool = False
 
     #: Shared asset inventory, relative to the repository root (owned by Design).
     assets_file: str = "data/assets.json"
