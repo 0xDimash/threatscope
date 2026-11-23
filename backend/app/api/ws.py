@@ -1,8 +1,8 @@
 """Live feed at ``/ws/events``.
 
 Server -> client only (contract v0.1). Every frame is ``{kind, data}`` with ``kind`` one of
-``event``, ``state``, ``risk``. This module emits ``event`` frames on ingest and a throttled
-``state`` frame (about once per second); ``risk`` arrives with the scoring engine.
+``event``, ``state``, ``risk``. This module emits ``event`` frames on ingest and throttled
+``state`` and ``risk`` frames (about once per second).
 
 The manager keeps no background tasks: state is emitted from the same request that produced
 new data, so there is nothing to leak when a client disconnects. A connection occupies exactly
@@ -46,6 +46,7 @@ class ConnectionManager:
         self._state_interval = state_interval
         self._clock = clock
         self._last_state_at: Optional[float] = None
+        self._last_risk_at: Optional[float] = None
 
     @property
     def connection_count(self) -> int:
@@ -59,6 +60,7 @@ class ConnectionManager:
         if not self._connections:
             # No listeners left, so the next client starts a fresh throttle window.
             self._last_state_at = None
+            self._last_risk_at = None
 
     async def broadcast(self, frame: dict[str, Any]) -> None:
         """Send ``frame`` to every socket, dropping sockets that fail."""
@@ -82,6 +84,27 @@ class ConnectionManager:
         if self._last_state_at is not None and now - self._last_state_at < self._state_interval:
             return False
         await self.broadcast_state(state)
+        return True
+
+    async def broadcast_risks(self, risks: Iterable[dict[str, Any]]) -> None:
+        """Send one ``risk`` frame per changed asset."""
+        self._last_risk_at = self._clock()
+        for risk in risks:
+            await self.broadcast({"kind": "risk", "data": risk})
+
+    async def maybe_broadcast_risks(self, risks: Iterable[dict[str, Any]]) -> bool:
+        """Emit risk frames unless they went out within ``state_interval`` seconds.
+
+        The score is read fresh from the database for each pass, so a throttled pass loses no
+        information: the next pass that gets through carries the current score.
+        """
+        pending = list(risks)
+        if not pending or not self._connections:
+            return False
+        now = self._clock()
+        if self._last_risk_at is not None and now - self._last_risk_at < self._state_interval:
+            return False
+        await self.broadcast_risks(pending)
         return True
 
 

@@ -69,12 +69,12 @@ arcs to an asset until the repository maps them.
 **Owner:** Threat intel · **Zone:** `backend/app/services`, `docs/threat-model.md`
 · **Depends on:** #2 · **Branch:** `feat/services-risk-engine`
 
-- [ ] scoring pass over recent events: `risk_delta` × criticality decay into `risk_snapshots`
-- [ ] `state` 0..1 → `ok | elevated | critical | compromised` per contract
-- [ ] `GET /api/assets/{id}/risk` reads the latest snapshot (shape unchanged)
-- [ ] `GET /api/state`: `threat_level` derived from scores, not worst-severity-in-window
-- [ ] WS broadcasts a `risk` frame after each scoring pass
-- [ ] scoring parameters documented in `docs/threat-model.md` (thesis material)
+- [x] scoring pass over recent events: `risk_delta` × criticality decay into `risk_snapshots`
+- [x] `state` 0..1 → `ok | elevated | critical | compromised` per contract
+- [x] `GET /api/assets/{id}/risk` reads the latest snapshot (shape unchanged)
+- [x] `GET /api/state`: `threat_level` derived from scores, not worst-severity-in-window
+- [x] WS broadcasts a `risk` frame after each scoring pass
+- [x] scoring parameters documented in `docs/threat-model.md` (thesis material)
 
 **Done when:** hammering one asset with ingests raises its risk visibly in `/api/state` and
 the `risk` frame — without any API shape change.
