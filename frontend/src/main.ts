@@ -6,6 +6,7 @@ import type { CityScene } from './scene/types';
 import type { SecurityEvent } from './types/contract';
 import type { FeedStatus } from './data';
 import { createHud, type HudApi } from './ui/hud';
+import { mountFeedControl } from './ui/feedControl';
 import { renderMenu, showNewSpaceNotice } from './ui/menu';
 import { SPACES } from './ui/spaces';
 import { openSettings, readSetting } from './ui/settings';
@@ -90,6 +91,7 @@ function openSpace(spaceId: string): void {
     if (hudHost) {
       const hud = createHud(hudHost);
       activeHud = hud;
+      mountFeedControl(hudHost);
       const deviceCounts = new Map<string, number>();
 
       // Initial state from the backend.

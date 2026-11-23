@@ -374,3 +374,63 @@ body {
   pointer-events: none;
   text-shadow: 0 0 4px #000000, 0 0 4px #000000;
 }
+/* ---------- demo feed control (dev only) ---------- */
+
+.feed-control {
+  position: fixed;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 16;
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid #1a1a1a;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  color: #6b6f76;
+  font-family: 'SF Mono', Consolas, Menlo, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  pointer-events: auto;
+}
+
+.feed-control.ready {
+  display: flex;
+}
+
+.feed-label,
+.feed-unit {
+  text-transform: uppercase;
+}
+
+.feed-control button {
+  min-width: 26px;
+  padding: 3px 6px;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  background: #000000;
+  color: #b0b3b8;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.feed-control button:hover {
+  border-color: #555555;
+  color: #ffffff;
+}
+
+.feed-control button.active {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #000000;
+}
+
+@media (max-width: 768px) {
+  .feed-control {
+    top: 96px;
+  }
+}
