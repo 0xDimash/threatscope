@@ -4,6 +4,9 @@ import { defineConfig } from 'vite';
 // Keep the allow-list to the tunnel domain rather than disabling the check.
 export default defineConfig({
   server: {
+    // listen on the LAN so a phone on the same Wi-Fi can open the app;
+    // the API base mirrors the page host, so <lan-ip>:5173 talks to <lan-ip>:8000
+    host: true,
     allowedHosts: ['.trycloudflare.com'],
   },
 });
