@@ -23,7 +23,7 @@ Reference: [`parallel-work.md`](parallel-work.md) for the seams,
 
 Not done from sprint 1 — carried into sprint 2:
 
-- [ ] **Suricata `eve.json` parser** (see task 1 below)
+- [x] **Suricata `eve.json` parser** (see task 1 below) — shipped in #21, registered in #28
 
 The contract also gained `GET /api/state`, `GET /api/assets/{id}/risk` and the `risk_snapshots`
 table (empty until the risk engine writes to it). Phase 1 is closed; phase 2/3 work begins.
@@ -37,12 +37,12 @@ table (empty until the risk engine writes to it). Phase 1 is closed; phase 2/3 w
 **Owner:** Threat intel · **Zone:** `backend/app/ingest`, `backend/tests`, `docs/threat-model.md`
 · **Depends on:** nothing · **Branch:** `feat/ingest-suricata`
 
-- [ ] pure function `raw -> list[SecurityEvent]`, same pattern as `zeek.py`
-- [ ] register in the `ADAPTERS` dict in `backend/app/api/ingest.py`
-- [ ] signature → `type`/`severity`/MITRE mapping documented in `docs/threat-model.md`
-- [ ] fixture under `backend/tests/fixtures/suricata/`
-- [ ] tests mirroring `test_ingest_zeek.py`
-- [ ] malformed/partial lines are skipped, never raise
+- [x] pure function `raw -> list[SecurityEvent]`, same pattern as `zeek.py`
+- [x] register in the `ADAPTERS` dict in `backend/app/api/ingest.py`
+- [x] signature → `type`/`severity`/MITRE mapping documented in `docs/threat-model.md`
+- [x] fixture under `backend/tests/fixtures/suricata/`
+- [x] tests mirroring `test_ingest_zeek.py`
+- [x] malformed/partial lines are skipped, never raise
 
 **Done when:** ~15 tests green and `POST /api/ingest {"source":"suricata"}` accepts a real
 `eve.json` chunk without changes elsewhere.
@@ -55,11 +55,11 @@ table (empty until the risk engine writes to it). Phase 1 is closed; phase 2/3 w
 Adapters currently leave `src.asset_id` / `dst.asset_id` as `null`; the frontend cannot draw
 arcs to an asset until the repository maps them.
 
-- [ ] `services/mapping.py`: lookup of `ip` / `host` against the `assets` table
-- [ ] applied in `repository.add_events` before insert (single place, adapters stay pure)
-- [ ] unknown IPs stay `null` — never a guessed asset
-- [ ] tests: known IP mapped, unknown IP stays `null`
-- [ ] note in `docs/threat-model.md` on how assets register their addresses
+- [x] `services/mapping.py`: lookup of `ip` / `host` against the `assets` table
+- [x] applied in `repository.add_events` before insert (single place, adapters stay pure)
+- [x] unknown IPs stay `null` — never a guessed asset
+- [x] tests: known IP mapped, unknown IP stays `null`
+- [x] note in `docs/threat-model.md` on how assets register their addresses
 
 **Done when:** ingested Zeek events land with a real `dst.asset_id`. Consumed by the frontend
 (arcs), risk engine (per-asset scoring) and the events API filter (`?asset_id=`).
