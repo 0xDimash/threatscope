@@ -121,6 +121,36 @@ def test_dead_socket_is_dropped_and_others_still_receive() -> None:
     anyio.run(scenario)
 
 
+def test_risk_frames_are_throttled() -> None:
+    class Clock:
+        now = 100.0
+
+        def __call__(self) -> float:
+            return self.now
+
+    async def scenario() -> None:
+        clock = Clock()
+        local = ConnectionManager(state_interval=1.0, clock=clock)
+        socket = FakeSocket()
+        await local.connect(socket)  # type: ignore[arg-type]
+
+        first = [{"asset_id": "asset-a", "risk": 10.0}]
+        second = [{"asset_id": "asset-a", "risk": 20.0}]
+
+        assert await local.maybe_broadcast_risks(first) is True
+        assert await local.maybe_broadcast_risks(second) is False
+
+        clock.now += 1.1
+        assert await local.maybe_broadcast_risks(second) is True
+
+        assert [(frame["kind"], frame["data"]["risk"]) for frame in socket.frames] == [
+            ("risk", 10.0),
+            ("risk", 20.0),
+        ]
+
+    anyio.run(scenario)
+
+
 def test_state_frames_are_throttled() -> None:
     class Clock:
         now = 100.0

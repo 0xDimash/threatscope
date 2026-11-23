@@ -7,9 +7,9 @@ Two ways in, both writing to the same event store:
 - ``POST /api/ingest/batch`` — already-normalised contract events. The simulator uses this.
 
 Adapters never touch the database; persistence and de-duplication live in
-``app.services.repository``. Both handlers broadcast to ``/ws/events`` after storing, which is
-why they are ``async``: the database work runs in the threadpool, the fan-out stays on the
-event loop.
+``app.services.repository``. Both handlers broadcast to ``/ws/events`` after storing — the
+fresh events, then throttled ``risk`` and ``state`` frames — which is why they are ``async``:
+the database work runs in the threadpool, the fan-out stays on the event loop.
 """
 
 from __future__ import annotations
@@ -34,11 +34,12 @@ ADAPTERS: dict[str, Callable[[str], list[dict[str, Any]]]] = {
 }
 
 
-async def _publish(events: list[dict[str, Any]], fresh: int) -> None:
-    """Fan fresh data out to WebSocket clients, then a throttled state frame."""
-    if not fresh:
+async def _publish(events: list[dict[str, Any]], result: repository.IngestResult) -> None:
+    """Fan fresh data out to WebSocket clients, then throttled risk and state frames."""
+    if not result.stored:
         return
     await manager.broadcast_events(events)
+    await manager.maybe_broadcast_risks(result.risks)
     await manager.maybe_broadcast_state(await run_in_threadpool(current_state))
 
 
@@ -58,7 +59,7 @@ async def ingest(request: IngestRequest, session: SessionDep) -> IngestResponse:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    fresh = await run_in_threadpool(repository.add_events, session, events)
+    fresh = await run_in_threadpool(repository.ingest_events, session, events)
     stored = await run_in_threadpool(repository.count, session)
     await _publish(events, fresh)
     return IngestResponse(accepted=len(events), stored=stored)
@@ -68,7 +69,7 @@ async def ingest(request: IngestRequest, session: SessionDep) -> IngestResponse:
 async def ingest_batch(batch: IngestBatchRequest, session: SessionDep) -> IngestResponse:
     """Accept already-normalised events; duplicates are silently skipped."""
     events = [event.model_dump() for event in batch.events]
-    fresh = await run_in_threadpool(repository.add_events, session, events)
+    fresh = await run_in_threadpool(repository.ingest_events, session, events)
     stored = await run_in_threadpool(repository.count, session)
     await _publish(events, fresh)
     return IngestResponse(accepted=len(events), stored=stored)
