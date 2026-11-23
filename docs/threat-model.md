@@ -8,10 +8,10 @@ and this file is wrong.
 
 Implemented: mapping a raw source event to a contract `type`, a `severity`, an optional MITRE
 ATT&CK technique, and a `risk_delta` — for Zeek `notice.log` and Suricata `eve.json` alerts.
+Also implemented: resolving event endpoints to inventory assets (`backend/app/services/mapping.py`).
 
-Not implemented yet: asset mapping (IP/host → `Asset`), risk accumulation and `RiskState`,
-correlation into incidents/kill-chain progress. Those live in `backend/app/services` and are
-tracked separately.
+Not implemented yet: risk accumulation and `RiskState`, correlation into incidents/kill-chain
+progress. Those live in `backend/app/services` and are tracked separately.
 
 ## Severity scale
 
@@ -106,6 +106,24 @@ Tactic names are normalised to the contract's kebab-case (`"Initial Access"` →
 
 A rule that names a technique but no tactic gets `mitre: null`: the contract's MITRE object
 requires all three fields, and inventing a tactic would be a false claim.
+
+## Asset mapping
+
+Implemented in `backend/app/services/mapping.py`, applied once in
+`repository.add_events` before insert. Adapters stay pure: they emit IPs and host names, the
+lookup turns them into `asset_id`s.
+
+| Step | Rule |
+|---|---|
+| 1 | Exact `ip` match against an asset's `ip` wins. |
+| 2 | Otherwise, `ip` inside a CIDR-valued asset (`10.30.0.0/16`). Exact matches are checked first, so a host address always beats a range. |
+| 3 | Otherwise, `host` matched (case-insensitively, trailing dot ignored) against the asset id, the id without its `asset-` prefix, the display name, and the slugified display name — `egov-portal`, `Egov Portal`, `asset-egov-portal` all resolve to `asset-egov-portal`. |
+| — | Unknown endpoints stay `null`. A guessed asset would draw the arc on the wrong building. |
+| — | An `asset_id` already set by the adapter or the simulator is never overwritten: the producer knows more than the lookup does. |
+| — | Duplicate IPs resolve deterministically to the lowest asset id, so two runs of the same capture agree. |
+
+No fuzzy matching, no DNS: a wrong arc is worse than a missing one. If a source only knows
+host names that the inventory does not carry, the fix is an inventory alias, not a heuristic.
 
 ## Data hygiene rules
 
