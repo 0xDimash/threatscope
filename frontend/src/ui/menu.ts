@@ -3,12 +3,14 @@ import { allSpaces, deleteSpace, type SpaceDef } from './spaces';
 export interface MenuCallbacks {
   onOpen(spaceId: string): void;
   onNewSpace(): void;
+  onEditSpace(spaceId: string): void;
   onSettings(): void;
 }
 
 function spaceRow(
   space: SpaceDef,
   onOpen: (id: string) => void,
+  onEdit: (id: string) => void,
   onDelete: (id: string) => void,
 ): HTMLElement {
   const item = document.createElement('div');
@@ -22,19 +24,19 @@ function spaceRow(
     <span class="menu-row-arrow" aria-hidden="true">→</span>
   `;
   const name = row.querySelector<HTMLElement>('.menu-row-name');
-  if (name) {
-    name.textContent = space.title;
-    if (space.custom) {
-      const badge = document.createElement('span');
-      badge.className = 'menu-row-badge';
-      badge.textContent = 'yours';
-      name.append(' ', badge);
-    }
-  }
+  if (name) name.textContent = space.title;
   row.addEventListener('click', () => onOpen(space.id));
   item.append(row);
 
   if (space.custom) {
+    const edit = document.createElement('button');
+    edit.className = 'menu-row-edit';
+    edit.type = 'button';
+    edit.textContent = '✎';
+    edit.setAttribute('aria-label', `Edit ${space.title}`);
+    edit.addEventListener('click', () => onEdit(space.id));
+    item.append(edit);
+
     const remove = document.createElement('button');
     remove.className = 'menu-row-delete';
     remove.type = 'button';
@@ -105,11 +107,16 @@ export function renderMenu(root: HTMLElement, callbacks: MenuCallbacks): void {
   for (const space of allSpaces()) {
     if (!space.available) continue;
     list.append(
-      spaceRow(space, callbacks.onOpen, (id) => {
-        deleteSpace(id);
-        // re-render so the list and the numbering stay honest
-        renderMenu(root, callbacks);
-      }),
+      spaceRow(
+        space,
+        callbacks.onOpen,
+        callbacks.onEditSpace,
+        (id) => {
+          deleteSpace(id);
+          // re-render so the list and the numbering stay honest
+          renderMenu(root, callbacks);
+        },
+      ),
     );
   }
 

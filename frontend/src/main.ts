@@ -9,7 +9,7 @@ import type { FeedStatus } from './data';
 import { createHud, type HudApi } from './ui/hud';
 import { mountFeedControl } from './ui/feedControl';
 import { renderMenu } from './ui/menu';
-import { openNewSpace } from './ui/newSpace';
+import { openSpaceEditor } from './ui/newSpace';
 import { findSpace, type SpaceTemplate } from './ui/spaces';
 import { openSettings, readSetting } from './ui/settings';
 
@@ -66,9 +66,20 @@ function showMenu(): void {
       window.location.hash = `#/space/${spaceId}`;
     },
     onNewSpace(): void {
-      openNewSpace(modalRoot, {
-        onCreated(spaceId: string): void {
+      openSpaceEditor(modalRoot, {
+        onSaved(spaceId: string): void {
           window.location.hash = `#/space/${spaceId}`;
+        },
+      });
+    },
+    onEditSpace(spaceId: string): void {
+      const space = findSpace(spaceId);
+      if (!space) return;
+      openSpaceEditor(modalRoot, {
+        space,
+        onSaved(): void {
+          // stay on the landing; re-render so the new name and device count show
+          showMenu();
         },
       });
     },
