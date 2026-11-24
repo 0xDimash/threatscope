@@ -23,6 +23,7 @@ import { createRoomArcsLayer } from '../viz/roomArcs';
 import { LabelFactory } from './labels';
 import type { CityScene, SceneStats } from './types';
 import type { SecurityEvent } from '../types/contract';
+import { ROOM_ASSET_MAP } from './roomMap';
 
 interface Device {
   id: string;
@@ -300,6 +301,13 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   uplinkGroup.add(mapPlane);
 
   devicesGroup.add(uplinkGroup);
+
+  // Events carry inventory asset ids; give the arc layer the same coordinates under
+  // those ids so an arc lands on the device that represents the asset.
+  for (const [deviceId, assetId] of Object.entries(ROOM_ASSET_MAP)) {
+    const p = positions.get(deviceId);
+    if (p) positions.set(assetId, p);
+  }
 
   const arcs = createRoomArcsLayer({
     scene,
