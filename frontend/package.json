@@ -2,6 +2,9 @@
   "name": "threatscope-frontend",
   "private": true,
   "version": "0.1.0",
+  "description": "ThreatScope 3D browser and desktop client",
+  "main": "electron/main.cjs",
+  "productName": "ThreatScope",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,16 +12,33 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
-    "format": "prettier --write src"
+    "format": "prettier --write src",
+    "electron": "npm run build && electron .",
+    "dist:linux": "npm run build && electron-builder --linux AppImage",
+    "dist:win-zip": "npm run build && electron-builder --win zip"
+  },
+  "build": {
+    "appId": "dev.dimash.threatscope",
+    "productName": "ThreatScope",
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    }
   },
   "dependencies": {
     "three": "^0.169.0"
   },
   "devDependencies": {
     "@types/three": "^0.169.0",
-    "typescript": "^5.6.0",
-    "vite": "^5.4.0",
+    "electron": "^45.4.1",
+    "electron-builder": "^26.18.0",
     "eslint": "^9.0.0",
-    "prettier": "^3.3.0"
+    "prettier": "^3.3.0",
+    "typescript": "^5.6.0",
+    "vite": "^5.4.0"
   }
 }
