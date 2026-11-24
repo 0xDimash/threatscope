@@ -1,6 +1,7 @@
 import './styles/scene.css';
 import './styles/menu.css';
 import { createRoomScene } from './scene/room';
+import { assetForDevice, deviceForAsset } from './scene/roomMap';
 import { connectFeed, fetchState, fetchAssetRisk, type AggregateState } from './data';
 import type { CityScene } from './scene/types';
 import type { SecurityEvent } from './types/contract';
@@ -118,14 +119,14 @@ function openSpace(spaceId: string): void {
       (active as any).__stopFeed = stopFeed;
 
       hudHost.addEventListener('hud:select', (e: any) => {
-        scene.focusAsset(e.detail);
+        scene.focusAsset(deviceForAsset(e.detail) ?? e.detail);
         // The backend is the only source of risk; no locally invented numbers.
         fetchAssetRisk(e.detail)
           .then((r) => hud.selectAsset(e.detail, r))
           .catch(() => hud.selectAsset(e.detail, null));
       });
       hudHost.addEventListener('hud:hover', (e: any) => {
-        scene.highlight?.(e.detail);
+        scene.highlight?.(deviceForAsset(e.detail) ?? e.detail);
       });
     }
   }
@@ -160,10 +161,13 @@ backBtn.addEventListener('click', () => {
 canvas.addEventListener('click', (event: MouseEvent) => {
   if (!active) return;
   const id = active.pick(event.clientX, event.clientY);
-  if (id) {
-    active.focusAsset(id);
-    activeHud?.selectAsset(id, null);
-  }
+  if (!id) return;
+  const assetId = assetForDevice(id) ?? id;
+  active.focusAsset(id);
+  activeHud?.selectAsset(assetId, null);
+  fetchAssetRisk(assetId)
+    .then((r) => activeHud?.selectAsset(assetId, r))
+    .catch(() => {});
 });
 settingsBtn.addEventListener('click', openSettingsModal);
 window.addEventListener('hashchange', route);
