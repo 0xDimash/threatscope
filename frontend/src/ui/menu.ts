@@ -1,4 +1,4 @@
-import { SPACES, type SpaceDef } from './spaces';
+import { allSpaces, deleteSpace, type SpaceDef } from './spaces';
 
 export interface MenuCallbacks {
   onOpen(spaceId: string): void;
@@ -6,7 +6,14 @@ export interface MenuCallbacks {
   onSettings(): void;
 }
 
-function spaceRow(space: SpaceDef, onOpen: (id: string) => void): HTMLElement {
+function spaceRow(
+  space: SpaceDef,
+  onOpen: (id: string) => void,
+  onDelete: (id: string) => void,
+): HTMLElement {
+  const item = document.createElement('div');
+  item.className = 'menu-item';
+
   const row = document.createElement('button');
   row.className = 'menu-row';
   row.type = 'button';
@@ -15,9 +22,29 @@ function spaceRow(space: SpaceDef, onOpen: (id: string) => void): HTMLElement {
     <span class="menu-row-arrow" aria-hidden="true">→</span>
   `;
   const name = row.querySelector<HTMLElement>('.menu-row-name');
-  if (name) name.textContent = space.title;
+  if (name) {
+    name.textContent = space.title;
+    if (space.custom) {
+      const badge = document.createElement('span');
+      badge.className = 'menu-row-badge';
+      badge.textContent = 'yours';
+      name.append(' ', badge);
+    }
+  }
   row.addEventListener('click', () => onOpen(space.id));
-  return row;
+  item.append(row);
+
+  if (space.custom) {
+    const remove = document.createElement('button');
+    remove.className = 'menu-row-delete';
+    remove.type = 'button';
+    remove.textContent = '×';
+    remove.setAttribute('aria-label', `Delete ${space.title}`);
+    remove.addEventListener('click', () => onDelete(space.id));
+    item.append(remove);
+  }
+
+  return item;
 }
 
 export function renderMenu(root: HTMLElement, callbacks: MenuCallbacks): void {
@@ -75,34 +102,20 @@ export function renderMenu(root: HTMLElement, callbacks: MenuCallbacks): void {
 
   const list = document.createElement('div');
   list.className = 'menu-list';
-  for (const space of SPACES) {
-    if (space.available) {
-      list.append(spaceRow(space, callbacks.onOpen));
-    }
+  for (const space of allSpaces()) {
+    if (!space.available) continue;
+    list.append(
+      spaceRow(space, callbacks.onOpen, (id) => {
+        deleteSpace(id);
+        // re-render so the list and the numbering stay honest
+        renderMenu(root, callbacks);
+      }),
+    );
   }
 
   side.append(topbar, list);
   layout.append(brand, side);
   root.append(layout, settingsButton);
-}
-
-export function showNewSpaceNotice(root: HTMLElement): void {
-  const existing = root.querySelector<HTMLElement>('.menu-notice');
-  if (existing) {
-    existing.remove();
-    return;
-  }
-  const notice = document.createElement('div');
-  notice.className = 'menu-notice';
-  notice.setAttribute('role', 'status');
-  notice.textContent = 'Custom spaces are on the roadmap — upload an asset inventory to add your own.';
-  const close = document.createElement('button');
-  close.className = 'menu-notice-close';
-  close.type = 'button';
-  close.textContent = '×';
-  close.addEventListener('click', () => notice.remove());
-  notice.append(close);
-  root.append(notice);
 }
 
 function startPixelMap(canvas: HTMLCanvasElement): void {
