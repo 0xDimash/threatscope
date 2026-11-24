@@ -91,23 +91,6 @@ make frontend     # vite on :5173
 make simulate     # stream fake attacks
 ```
 
-### Desktop app (Electron, jam build)
-
-The same frontend can run in an Electron window. It is a **client**: keep the backend running on
-`:8000` (see above); the app serves the built UI on `:5173`, the origin the backend already trusts.
-
-```bash
-cd frontend
-npm run electron        # build + open the desktop app
-
-npm run dist:linux      # AppImage in frontend/release/
-npm run dist:win-zip    # Windows zip in frontend/release/ (cross-builds from Linux)
-```
-
-Stop `npm run dev` first — Vite and the desktop app both want port 5173. The Windows zip is
-unsigned: expect SmartScreen → More info → Run anyway. See
-[`docs/adr/0003-electron-desktop.md`](docs/adr/0003-electron-desktop.md).
-
 ---
 
 ## Using AI agents
