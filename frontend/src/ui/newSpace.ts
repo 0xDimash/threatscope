@@ -1,13 +1,16 @@
 /**
- * "New space" dialog with a layout editor: name the room, then place components on a grid.
+ * Space editor dialog: name the room, then place components on a grid. Used both to create a
+ * space and to edit one — same layout, prefilled from the stored components.
  * A component here is a 3D device the room scene renders — the same kinds the built-in
  * room uses. Persistence and limits live in `spaces.ts`.
  */
 import { COMPONENT_KINDS, type ComponentKind, type RoomComponent } from '../scene/room';
-import { MAX_TITLE, createSpace } from './spaces';
+import { MAX_TITLE, createSpace, updateSpace, type SpaceDef } from './spaces';
 
-export interface NewSpaceCallbacks {
-  onCreated(spaceId: string): void;
+export interface SpaceEditorCallbacks {
+  /** Present when editing an existing space. */
+  space?: SpaceDef;
+  onSaved(spaceId: string): void;
 }
 
 const COLS = 8;
@@ -29,6 +32,14 @@ function slotPosition(index: number): { x: number; z: number } {
   };
 }
 
+/** Nearest grid slot for stored coordinates; null when the point is outside the room. */
+function slotForPosition(x: number, z: number): number | null {
+  const col = Math.round((x + ROOM_W / 2) / (ROOM_W / COLS) - 0.5);
+  const row = Math.round((z + ROOM_D / 2) / (ROOM_D / ROWS) - 0.5);
+  if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return null;
+  return row * COLS + col;
+}
+
 const START: Array<[number, ComponentKind]> = [
   [11, 'rack'],
   [12, 'pc'],
@@ -36,19 +47,33 @@ const START: Array<[number, ComponentKind]> = [
   [20, 'nas'],
 ];
 
-export function openNewSpace(root: HTMLElement, callbacks: NewSpaceCallbacks): void {
-  const placed = new Map<number, ComponentKind>(START);
+export function openSpaceEditor(root: HTMLElement, callbacks: SpaceEditorCallbacks): void {
+  const editing = callbacks.space;
+  const placed = new Map<number, ComponentKind>(
+    editing
+      ? (editing.components ?? [])
+          .map((component) => {
+            const slot = slotForPosition(component.x, component.z);
+            return slot === null ? null : ([slot, component.kind] as [number, ComponentKind]);
+          })
+          .filter((entry): entry is [number, ComponentKind] => entry !== null)
+      : START,
+  );
   let brush: ComponentKind = 'pc';
 
   const modal = document.createElement('div');
   modal.className = 'modal-backdrop';
   modal.innerHTML = `
-    <div class="modal wide" role="dialog" aria-modal="true" aria-label="New space">
+    <div class="modal wide" role="dialog" aria-modal="true" aria-label="${editing ? 'Edit space' : 'New space'}">
       <div class="modal-head">
-        <h2>New space</h2>
+        <h2>${editing ? 'Edit space' : 'New space'}</h2>
         <button type="button" class="modal-close" aria-label="Close">×</button>
       </div>
-      <p class="modal-note">Build a room from scratch: pick a component, then click a slot.</p>
+      <p class="modal-note">${
+        editing
+          ? 'Rename the room or rearrange its devices.'
+          : 'Build a room from scratch: pick a component, then click a slot.'
+      }</p>
 
       <label class="field">
         <span class="field-label">Name</span>
@@ -71,7 +96,9 @@ export function openNewSpace(root: HTMLElement, callbacks: NewSpaceCallbacks): v
       <div class="modal-error" role="alert" hidden></div>
       <div class="modal-actions">
         <button type="button" class="btn-ghost" data-action="cancel">Cancel</button>
-        <button type="button" class="btn-solid" data-action="create" disabled>Create space</button>
+        <button type="button" class="btn-solid" data-action="create" disabled>${
+          editing ? 'Save changes' : 'Create space'
+        }</button>
       </div>
     </div>
   `;
@@ -83,6 +110,11 @@ export function openNewSpace(root: HTMLElement, callbacks: NewSpaceCallbacks): v
   const palette = modal.querySelector<HTMLElement>('.palette')!;
   const grid = modal.querySelector<HTMLElement>('.builder-grid')!;
   const count = modal.querySelector<HTMLElement>('.builder-count')!;
+
+  if (editing) {
+    input.value = editing.title;
+    createBtn.disabled = false;
+  }
 
   const close = (): void => {
     modal.remove();
@@ -153,14 +185,16 @@ export function openNewSpace(root: HTMLElement, callbacks: NewSpaceCallbacks): v
     const components: RoomComponent[] = [...placed.entries()]
       .sort(([a], [b]) => a - b)
       .map(([index, kind]) => ({ kind, ...slotPosition(index) }));
-    const result = createSpace(input.value, 'room', components);
+    const result = editing
+      ? updateSpace(editing.id, { title: input.value, components })
+      : createSpace(input.value, 'room', components);
     if (!result.ok || !result.space) {
-      error.textContent = result.error ?? 'Could not create the space.';
+      error.textContent = result.error ?? (editing ? 'Could not save the space.' : 'Could not create the space.');
       error.hidden = false;
       return;
     }
     close();
-    callbacks.onCreated(result.space.id);
+    callbacks.onSaved(result.space.id);
   };
 
   input.addEventListener('input', () => {

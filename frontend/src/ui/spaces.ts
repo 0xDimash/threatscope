@@ -90,14 +90,24 @@ export interface CreateSpaceResult {
   error?: string;
 }
 
+function normaliseTitle(title: string): string {
+  return title.trim().replace(/\s+/g, ' ');
+}
+
+function titleError(clean: string): string | null {
+  if (clean.length < 2) return 'Give the space a name (at least 2 characters).';
+  if (clean.length > MAX_TITLE) return `Keep it under ${MAX_TITLE} characters.`;
+  return null;
+}
+
 export function createSpace(
   title: string,
   template: SpaceTemplate = 'room',
   components: RoomComponent[] = [],
 ): CreateSpaceResult {
-  const clean = title.trim().replace(/\s+/g, ' ');
-  if (clean.length < 2) return { ok: false, error: 'Give the space a name (at least 2 characters).' };
-  if (clean.length > MAX_TITLE) return { ok: false, error: `Keep it under ${MAX_TITLE} characters.` };
+  const clean = normaliseTitle(title);
+  const error = titleError(clean);
+  if (error) return { ok: false, error };
 
   const existing = readCustom();
   if (existing.length >= MAX_SPACES) {
@@ -126,4 +136,28 @@ export function createSpace(
 
 export function deleteSpace(id: string): void {
   writeCustom(readCustom().filter((space) => space.id !== id));
+}
+
+/** Rename a space and/or replace its layout. Returns the stored space. */
+export function updateSpace(
+  id: string,
+  patch: { title?: string; components?: RoomComponent[] },
+): CreateSpaceResult {
+  const spaces = readCustom();
+  const index = spaces.findIndex((space) => space.id === id);
+  if (index === -1) return { ok: false, error: 'That space no longer exists.' };
+
+  const current = spaces[index];
+  const clean = normaliseTitle(patch.title ?? current.title);
+  const error = titleError(clean);
+  if (error) return { ok: false, error };
+
+  const next: SpaceDef = {
+    ...current,
+    title: clean,
+    components: patch.components ?? current.components,
+  };
+  spaces[index] = next;
+  writeCustom(spaces);
+  return { ok: true, space: next };
 }
