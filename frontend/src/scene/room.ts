@@ -32,6 +32,36 @@ interface Device {
   size: { x: number; y: number; z: number };
 }
 
+export type ComponentKind = 'rack' | 'switch' | 'pc' | 'nas' | 'cam' | 'iot';
+
+/** One placed component in a custom room layout. */
+export interface RoomComponent {
+  kind: ComponentKind;
+  x: number;
+  z: number;
+}
+
+export const COMPONENT_KINDS: Record<ComponentKind, { label: string; size: { x: number; y: number; z: number }; y: number }> = {
+  rack: { label: 'Server Rack', size: { x: 1.6, y: 3.2, z: 1.2 }, y: 0 },
+  switch: { label: 'Switch', size: { x: 1.6, y: 0.4, z: 1.2 }, y: 0 },
+  pc: { label: 'Workstation', size: { x: 1.0, y: 0.6, z: 0.8 }, y: 0 },
+  nas: { label: 'NAS', size: { x: 1.2, y: 0.8, z: 1.0 }, y: 0 },
+  cam: { label: 'Camera', size: { x: 0.5, y: 0.5, z: 0.5 }, y: 3.6 },
+  iot: { label: 'IoT Hub', size: { x: 0.7, y: 0.4, z: 0.7 }, y: 0 },
+};
+
+function devicesFromLayout(components: RoomComponent[]): Device[] {
+  return components.map((component, index) => {
+    const kind = COMPONENT_KINDS[component.kind] ?? COMPONENT_KINDS.pc;
+    return {
+      id: `custom-${index}-${component.kind}`,
+      name: kind.label,
+      pos: { x: component.x, y: kind.y, z: component.z },
+      size: { ...kind.size },
+    };
+  });
+}
+
 const DEVICES: Device[] = [
   { id: 'room-rack', name: 'Server Rack', pos: { x: -4, y: 0, z: -3 }, size: { x: 1.6, y: 3.2, z: 1.2 } },
   { id: 'room-switch', name: 'Switch', pos: { x: -4, y: 3.4, z: -3 }, size: { x: 1.6, y: 0.4, z: 1.2 } },
@@ -175,7 +205,7 @@ function createWorldMap(): { canvas: HTMLCanvasElement; texture: CanvasTexture; 
   return { canvas, texture, update };
 }
 
-export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: boolean; labels?: boolean; pixelRatio?: number; events?: readonly SecurityEvent[]; eventIntervalMs?: number } = {}): CityScene {
+export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: boolean; labels?: boolean; pixelRatio?: number; events?: readonly SecurityEvent[]; eventIntervalMs?: number; layout?: RoomComponent[] } = {}): CityScene {
   const scene = new Scene();
   scene.background = new Color(0x000000);
 
@@ -251,7 +281,9 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   const meshById = new Map<string, Mesh>();
   const materialById = new Map<string, MeshBasicMaterial>();
 
-  for (const dev of DEVICES) {
+  const devices = options.layout ? devicesFromLayout(options.layout) : DEVICES;
+
+  for (const dev of devices) {
     const mat = new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0 });
     const box = new Mesh(
       new BoxGeometry(dev.size.x, dev.size.y, dev.size.z),
@@ -446,7 +478,7 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
 
 
   const sceneApi: CityScene = {
-    assetIds: DEVICES.map((d) => d.id),
+    assetIds: devices.map((d) => d.id),
     start(): void {
       if (running) return;
       running = true;
@@ -490,8 +522,8 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
         frameMs: Math.round(frameMs * 100) / 100,
         drawCalls: renderer.info.render.calls,
         triangles: renderer.info.render.triangles,
-        assets: DEVICES.length,
-        labelCount: DEVICES.length,
+        assets: devices.length,
+        labelCount: devices.length,
       };
     },
     pick(clientX: number, clientY: number): string | null {
@@ -508,7 +540,7 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
       return typeof id === 'string' ? id : null;
     },
     focusAsset(id: string, _distance = 6): void {
-      const dev = DEVICES.find((d) => d.id === id);
+      const dev = devices.find((d) => d.id === id);
       if (!dev) return;
       const target = new Vector3(dev.pos.x, dev.pos.y + dev.size.y / 2, dev.pos.z);
       const toPos = target.clone().add(new Vector3(4, 3, 4));

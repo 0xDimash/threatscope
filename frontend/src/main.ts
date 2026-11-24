@@ -1,6 +1,6 @@
 import './styles/scene.css';
 import './styles/menu.css';
-import { createRoomScene } from './scene/room';
+import { createRoomScene, type RoomComponent } from './scene/room';
 import { assetForDevice, deviceForAsset } from './scene/roomMap';
 import { connectFeed, fetchState, fetchAssetRisk, type AggregateState } from './data';
 import type { CityScene } from './scene/types';
@@ -29,7 +29,10 @@ const backBtn = requireElement<HTMLButtonElement>('#back-btn', '#back-btn');
 const settingsBtn = requireElement<HTMLButtonElement>('#settings-btn', '#settings-btn');
 const modalRoot = requireElement<HTMLElement>('#modal-root', '#modal-root');
 
-type SceneFactory = (canvas: HTMLCanvasElement, options: { bloom: boolean; labels: boolean }) => CityScene;
+type SceneFactory = (
+  canvas: HTMLCanvasElement,
+  options: { bloom: boolean; labels: boolean; layout?: RoomComponent[] },
+) => CityScene;
 
 const FACTORIES: Record<SpaceTemplate, SceneFactory> = {
   room: (target, options) => createRoomScene(target, options),
@@ -86,7 +89,7 @@ function openSpace(spaceId: string): void {
   menuRoot.hidden = true;
   topbar.hidden = false;
   spaceTitle.textContent = space.title;
-  const scene = factory(canvas, settingsOptions());
+  const scene = factory(canvas, { ...settingsOptions(), layout: space.components });
   scene.start();
   active = scene;
   activeSpaceId = spaceId;
