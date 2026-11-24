@@ -5,6 +5,8 @@
  * renders the same 3D scene. Stored in localStorage so it survives a reload; if storage is
  * unavailable (private mode, quota) we fall back to memory for the session instead of failing.
  */
+import type { RoomComponent } from '../scene/room';
+
 export type SpaceTemplate = 'room';
 
 export interface SpaceDef {
@@ -17,6 +19,8 @@ export interface SpaceDef {
   available: boolean;
   template: SpaceTemplate;
   custom?: boolean;
+  /** Present for custom rooms: the devices the user placed. */
+  components?: RoomComponent[];
 }
 
 export const SPACES: readonly SpaceDef[] = [
@@ -86,7 +90,11 @@ export interface CreateSpaceResult {
   error?: string;
 }
 
-export function createSpace(title: string, template: SpaceTemplate = 'room'): CreateSpaceResult {
+export function createSpace(
+  title: string,
+  template: SpaceTemplate = 'room',
+  components: RoomComponent[] = [],
+): CreateSpaceResult {
   const clean = title.trim().replace(/\s+/g, ' ');
   if (clean.length < 2) return { ok: false, error: 'Give the space a name (at least 2 characters).' };
   if (clean.length > MAX_TITLE) return { ok: false, error: `Keep it under ${MAX_TITLE} characters.` };
@@ -107,6 +115,7 @@ export function createSpace(title: string, template: SpaceTemplate = 'room'): Cr
     available: true,
     template,
     custom: true,
+    components,
   };
 
   if (!writeCustom([...existing, space]) && !canStore()) {
