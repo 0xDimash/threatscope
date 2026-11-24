@@ -8,8 +8,9 @@ import type { SecurityEvent } from './types/contract';
 import type { FeedStatus } from './data';
 import { createHud, type HudApi } from './ui/hud';
 import { mountFeedControl } from './ui/feedControl';
-import { renderMenu, showNewSpaceNotice } from './ui/menu';
-import { SPACES } from './ui/spaces';
+import { renderMenu } from './ui/menu';
+import { openNewSpace } from './ui/newSpace';
+import { findSpace, type SpaceTemplate } from './ui/spaces';
 import { openSettings, readSetting } from './ui/settings';
 
 function requireElement<T extends HTMLElement>(selector: string, name: string): T {
@@ -30,7 +31,7 @@ const modalRoot = requireElement<HTMLElement>('#modal-root', '#modal-root');
 
 type SceneFactory = (canvas: HTMLCanvasElement, options: { bloom: boolean; labels: boolean }) => CityScene;
 
-const FACTORIES: Record<string, SceneFactory> = {
+const FACTORIES: Record<SpaceTemplate, SceneFactory> = {
   room: (target, options) => createRoomScene(target, options),
 };
 
@@ -62,7 +63,11 @@ function showMenu(): void {
       window.location.hash = `#/space/${spaceId}`;
     },
     onNewSpace(): void {
-      showNewSpaceNotice(menuRoot);
+      openNewSpace(modalRoot, {
+        onCreated(spaceId: string): void {
+          window.location.hash = `#/space/${spaceId}`;
+        },
+      });
     },
     onSettings(): void {
       openSettingsModal();
@@ -71,8 +76,8 @@ function showMenu(): void {
 }
 
 function openSpace(spaceId: string): void {
-  const factory = FACTORIES[spaceId];
-  const space = SPACES.find((entry) => entry.id === spaceId);
+  const space = findSpace(spaceId);
+  const factory = space ? FACTORIES[space.template] : null;
   if (!factory || !space || !space.available) {
     window.location.hash = '#/';
     return;
@@ -87,7 +92,7 @@ function openSpace(spaceId: string): void {
   activeSpaceId = spaceId;
   (window as Window & { __threatscope?: CityScene }).__threatscope = scene;
 
-  if (spaceId === 'room') {
+  if (space.template === 'room') {
     const hudHost = document.querySelector<HTMLElement>('#hud');
     if (hudHost) {
       const hud = createHud(hudHost);
