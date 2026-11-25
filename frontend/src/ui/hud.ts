@@ -13,6 +13,8 @@ export interface HudApi {
   setState(state: AggregateState): void;
   selectAsset(id: string | null, risk?: RiskState | null): void;
   updateRisk(assetId: string, risk: RiskState): void;
+  /** Asset whose detail card is open, or null. */
+  selectedId(): string | null;
   dispose(): void;
 }
 
@@ -195,6 +197,9 @@ export function createHud(host: HTMLElement): HudApi {
         return;
       }
       api.selectAsset(assetId, risk);
+    },
+    selectedId(): string | null {
+      return detail.hidden ? null : currentId;
     },
     dispose(): void {
       banner.remove();

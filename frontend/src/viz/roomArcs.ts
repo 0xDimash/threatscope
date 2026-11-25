@@ -18,6 +18,8 @@ export interface RoomArcsLayer {
   spawn(event: SecurityEvent): void;
   update(elapsed: number, delta: number): void;
   resize(width: number, height: number): void;
+  /** Colour of arcs and packets (live and future); white on the dark scene, dark on the print variant. */
+  setColor(hex: number): void;
   dispose(): void;
 }
 
@@ -65,6 +67,7 @@ export function createRoomArcsLayer(options: {
 
   const arcs: ActiveArc[] = [];
   let resolution = { width: options.viewportWidth, height: options.viewportHeight };
+  let arcColor = 0xffffff;
 
   function destinationPosition(event: SecurityEvent): Vector3 | null {
     const id = event.dst.asset_id;
@@ -104,7 +107,7 @@ export function createRoomArcsLayer(options: {
     geometry.setPositions(positionsArray);
 
     const material = new LineMaterial({
-      color: 0xffffff,
+      color: arcColor,
       linewidth: style.width,
       transparent: true,
       opacity: 0,
@@ -121,7 +124,7 @@ export function createRoomArcsLayer(options: {
 
     const packet = new Mesh(
       new BoxGeometry(style.packetSize, style.packetSize, style.packetSize),
-      new MeshBasicMaterial({ color: 0xffffff }),
+      new MeshBasicMaterial({ color: arcColor }),
     );
     packet.position.copy(start);
     group.add(packet);
@@ -160,6 +163,14 @@ export function createRoomArcsLayer(options: {
     for (const arc of arcs) arc.material.resolution.set(width, height);
   }
 
+  function setColor(hex: number): void {
+    arcColor = hex;
+    for (const arc of arcs) {
+      arc.material.color.setHex(hex);
+      (arc.packet.material as MeshBasicMaterial).color.setHex(hex);
+    }
+  }
+
   function dispose(): void {
     for (const arc of arcs) {
       group.remove(arc.line, arc.packet);
@@ -172,7 +183,7 @@ export function createRoomArcsLayer(options: {
     scene.remove(group);
   }
 
-  return { group, spawn, update, resize, dispose };
+  return { group, spawn, update, resize, setColor, dispose };
 }
 function hashString(value: string): number {
   let hash = 0;

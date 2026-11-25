@@ -434,3 +434,91 @@ body {
     top: 96px;
   }
 }
+
+/* ---------- figure mode: light print variant, no cursor, no debug controls ----------
+   Toggled from Settings → Figures. Everything here lives under body.figure-mode, so removing
+   the class restores the live UI exactly. The HUD export paints from these computed styles. */
+
+body.figure-mode #scene,
+body.figure-mode #hud,
+body.figure-mode #hud * {
+  cursor: none !important;
+}
+
+body.figure-mode .feed-control,
+body.figure-mode .hud-toggle,
+body.figure-mode .hud-detail-close {
+  display: none !important;
+}
+
+body.figure-mode .hud-banner,
+body.figure-mode .hud-panel,
+body.figure-mode .hud-detail {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: #c9c9c3;
+  color: #15171a;
+  backdrop-filter: none;
+}
+
+body.figure-mode .hud-banner-level,
+body.figure-mode .hud-kill,
+body.figure-mode .hud-panel-title,
+body.figure-mode .hud-event-type,
+body.figure-mode .hud-detail-head strong,
+body.figure-mode .hud-detail-row span:last-child {
+  color: #000000;
+}
+
+body.figure-mode .hud-banner-counts,
+body.figure-mode .hud-event-asset,
+body.figure-mode .hud-detail-row span:first-child {
+  color: #5d6168;
+}
+
+body.figure-mode .hud-panel-head {
+  border-bottom-color: #d6d6d0;
+}
+
+body.figure-mode .hud-filter {
+  background: #ffffff;
+  border-color: #c4c4be;
+  color: #8a8d93;
+}
+
+body.figure-mode .hud-filter.active {
+  background: #f1f1ee;
+  border-color: #000000;
+  color: #000000;
+}
+
+body.figure-mode .hud-event {
+  color: #15171a;
+}
+
+body.figure-mode .hud-event-time {
+  color: #7a7d83;
+}
+
+body.figure-mode .hud-event:hover {
+  background: transparent;
+}
+
+body.figure-mode .hud-event-dot,
+body.figure-mode .hud-event.hud-sev-critical .hud-event-dot,
+body.figure-mode .hud-event.hud-sev-high .hud-event-dot {
+  background: #000000;
+}
+
+body.figure-mode .hud-event.hud-sev-medium .hud-event-dot {
+  background: transparent;
+  border-color: #000000;
+}
+
+body.figure-mode .hud-event.hud-sev-low .hud-event-dot {
+  background: transparent;
+  border-color: #8a8d93;
+}
+
+body.figure-mode .hud-event.hud-sev-info .hud-event-dot {
+  background: #c4c4be;
+}
