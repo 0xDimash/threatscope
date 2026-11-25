@@ -12,6 +12,7 @@ import { renderMenu } from './ui/menu';
 import { openSpaceEditor } from './ui/newSpace';
 import { findSpace, type SpaceTemplate } from './ui/spaces';
 import { openSettings, readSetting } from './ui/settings';
+import { createFigureTools } from './ui/figures';
 
 function requireElement<T extends HTMLElement>(selector: string, name: string): T {
   const element = document.querySelector<T>(selector);
@@ -42,6 +43,14 @@ let active: CityScene | null = null;
 let activeHud: HudApi | null = null;
 let activeSpaceId: string | null = null;
 
+// Thesis figure export. Figure mode belongs to the room view and is re-applied whenever a scene is built.
+const figures = createFigureTools({
+  getScene: () => active,
+  getSpaceId: () => activeSpaceId,
+  getHudHost: () => document.querySelector<HTMLElement>('#hud'),
+  getSelectedAssetId: () => activeHud?.selectedId() ?? null,
+});
+
 function settingsOptions(): { bloom: boolean; labels: boolean } {
   const bloom = readSetting('bloom', true) && !/[?&]nobloom/.test(window.location.search);
   return { bloom, labels: readSetting('labels', true) };
@@ -59,6 +68,7 @@ function disposeActive(): void {
 
 function showMenu(): void {
   disposeActive();
+  figures.setFigureMode(false);
   menuRoot.hidden = false;
   topbar.hidden = true;
   renderMenu(menuRoot, {
@@ -104,6 +114,7 @@ function openSpace(spaceId: string): void {
   scene.start();
   active = scene;
   activeSpaceId = spaceId;
+  figures.setFigureMode(figures.isFigureMode());
   (window as Window & { __threatscope?: CityScene }).__threatscope = scene;
 
   if (space.template === 'room') {
@@ -152,17 +163,22 @@ function openSpace(spaceId: string): void {
 }
 
 function openSettingsModal(): void {
-  openSettings(modalRoot, {
-    onChange(): void {
-      // Rebuild the live space so the new look applies immediately.
-      if (activeSpaceId) {
-        openSpace(activeSpaceId);
-      }
+  openSettings(
+    modalRoot,
+    {
+      onChange(): void {
+        // Rebuild the live space so the new look applies immediately.
+        if (activeSpaceId) {
+          openSpace(activeSpaceId);
+        }
+      },
+      onClose(): void {
+        /* nothing — modal is removed by itself */
+      },
     },
-    onClose(): void {
-      /* nothing — modal is removed by itself */
-    },
-  });
+    // Figures only make sense with a room on screen, not from the landing page.
+    active ? figures : undefined,
+  );
 }
 
 function route(): void {

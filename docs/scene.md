@@ -71,6 +71,14 @@ scene.resize();        // re-reads the canvas size
 scene.dispose();
 ```
 
+Figure export (room scene, see [design/figures.md](design/figures.md)):
+
+```ts
+scene.captureFrame(2400, 1350);  // 2D canvas, rendered at pixel ratio 1; live view restored
+scene.setFigureMode(true);       // light print variant, no hover highlight, no cursor
+scene.getCameraPose();           // { position, target, fov } for the state file
+```
+
 ## Performance
 
 Measured in Chrome 157 on an Apple M4 GPU, 1600×813, production build, all 26 assets:

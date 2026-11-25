@@ -2,6 +2,8 @@
  * Settings modal. Values persist in localStorage and are applied when a scene
  * is (re)created — changing one rebuilds the current space, which is cheap.
  */
+import type { FigureTools } from './figures';
+
 export type SettingsKey = 'bloom' | 'labels';
 
 const PREFIX = 'ts.settings';
@@ -28,7 +30,65 @@ const ROWS: Array<{ key: SettingsKey; title: string; description: string }> = [
   { key: 'labels', title: 'Device labels', description: 'Show the name above every device in the scene.' },
 ];
 
-export function openSettings(root: HTMLElement, callbacks: SettingsCallbacks): void {
+function renderFigureSection(modal: HTMLElement, figures: FigureTools): void {
+  const section = document.createElement('section');
+  section.className = 'modal-section';
+  section.innerHTML = `
+    <h3>Figures</h3>
+    <label class="modal-row">
+      <span class="modal-row-text">
+        <strong>Figure mode</strong>
+        <span>Light print look. Hides the cursor, hover highlights and debug controls. Off restores the live view.</span>
+      </span>
+      <input type="checkbox" ${figures.isFigureMode() ? 'checked' : ''} />
+      <span class="modal-switch" aria-hidden="true"></span>
+    </label>
+    <div class="export-grid"></div>
+    <p class="export-status" role="status" aria-live="polite"></p>
+  `;
+  const grid = section.querySelector<HTMLElement>('.export-grid')!;
+  const status = section.querySelector<HTMLElement>('.export-status')!;
+
+  const actions: Array<{ label: string; run: () => Promise<string> }> = [
+    { label: 'Scene PNG · window', run: () => figures.exportScene({ hud: false, size: 'viewport' }) },
+    { label: 'Scene PNG · 2400×1350', run: () => figures.exportScene({ hud: false, size: 'print' }) },
+    { label: 'Scene + HUD PNG · window', run: () => figures.exportScene({ hud: true, size: 'viewport' }) },
+    { label: 'Scene + HUD PNG · 2400×1350', run: () => figures.exportScene({ hud: true, size: 'print' }) },
+  ];
+  if (figures.hasTimeline()) {
+    actions.push({ label: 'Timeline SVG', run: () => figures.exportTimelineSvg() });
+  }
+  actions.push({ label: 'State JSON', run: () => figures.exportState() });
+
+  const buttons: HTMLButtonElement[] = [];
+  for (const action of actions) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'export-btn';
+    button.textContent = action.label;
+    button.addEventListener('click', async () => {
+      buttons.forEach((b) => (b.disabled = true));
+      status.textContent = 'Working…';
+      status.classList.remove('error');
+      try {
+        status.textContent = `Saved ${await action.run()}`;
+      } catch (error) {
+        status.classList.add('error');
+        status.textContent = error instanceof Error ? error.message : 'Export failed.';
+      } finally {
+        buttons.forEach((b) => (b.disabled = false));
+      }
+    });
+    buttons.push(button);
+    grid.append(button);
+  }
+
+  const toggle = section.querySelector<HTMLInputElement>('input')!;
+  toggle.addEventListener('change', () => figures.setFigureMode(toggle.checked));
+  modal.querySelector('.modal-foot')?.before(section);
+}
+
+export function openSettings(root: HTMLElement, callbacks: SettingsCallbacks, figures?: FigureTools): void {
   const modal = document.createElement('div');
   modal.className = 'modal-backdrop';
   modal.innerHTML = `
@@ -64,6 +124,10 @@ export function openSettings(root: HTMLElement, callbacks: SettingsCallbacks): v
       });
       rows.append(label);
     }
+  }
+
+  if (figures) {
+    renderFigureSection(modal, figures);
   }
 
   function close(): void {

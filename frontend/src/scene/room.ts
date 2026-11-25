@@ -1,4 +1,5 @@
 import {
+  ACESFilmicToneMapping,
   AmbientLight,
   BoxGeometry,
   Clock,
@@ -9,6 +10,7 @@ import {
   LinearFilter,
   Mesh,
   MeshBasicMaterial,
+  NoToneMapping,
   PerspectiveCamera,
   Raycaster,
   Scene,
@@ -21,7 +23,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { createRenderContext, createRenderer, type RenderContext } from './renderer';
 import { createRoomArcsLayer } from '../viz/roomArcs';
 import { LabelFactory } from './labels';
-import type { CityScene, SceneStats } from './types';
+import type { CameraPose, CityScene, SceneStats } from './types';
 import type { SecurityEvent } from '../types/contract';
 import { ROOM_ASSET_MAP } from './roomMap';
 
@@ -209,6 +211,13 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   const scene = new Scene();
   scene.background = new Color(0x000000);
 
+  // Materials that swap to a print-friendly colour in figure mode (dark = live look).
+  const themed: Array<{ material: MeshBasicMaterial; dark: number; light: number }> = [];
+  function themedMaterial(material: MeshBasicMaterial, light: number): MeshBasicMaterial {
+    themed.push({ material, dark: material.color.getHex(), light });
+    return material;
+  }
+
   const renderer = createRenderer(canvas, { pixelRatio: options.pixelRatio });
   renderer.info.autoReset = false;
 
@@ -238,12 +247,12 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   roomGroup.name = 'room';
   const floor = new Mesh(
     new BoxGeometry(ROOM.w, 0.1, ROOM.d),
-    new MeshBasicMaterial({ color: 0x1a1a1a }),
+    themedMaterial(new MeshBasicMaterial({ color: 0x1a1a1a }), 0xe6e6e2),
   );
   floor.position.y = -0.05;
   roomGroup.add(floor);
 
-  const wallMat = new MeshBasicMaterial({ color: 0x0a0a0a, transparent: true, opacity: 0.35, depthWrite: false });
+  const wallMat = themedMaterial(new MeshBasicMaterial({ color: 0x0a0a0a, transparent: true, opacity: 0.35, depthWrite: false }), 0xd4d4ce);
   const back = new Mesh(new BoxGeometry(ROOM.w, ROOM.h, 0.1), wallMat);
   back.position.set(0, ROOM.h / 2, -ROOM.d / 2);
   roomGroup.add(back);
@@ -256,13 +265,14 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
 
   // grid on floor
   const gridGroup = new Group();
+  const gridMat = themedMaterial(new MeshBasicMaterial({ color: 0x333333 }), 0xb8b8b2);
   for (let i = -ROOM.w / 2; i <= ROOM.w / 2; i += 1) {
-    const g = new Mesh(new BoxGeometry(0.02, 0.01, ROOM.d), new MeshBasicMaterial({ color: 0x333333 }));
+    const g = new Mesh(new BoxGeometry(0.02, 0.01, ROOM.d), gridMat);
     g.position.set(i, 0.01, 0);
     gridGroup.add(g);
   }
   for (let i = -ROOM.d / 2; i <= ROOM.d / 2; i += 1) {
-    const g = new Mesh(new BoxGeometry(ROOM.w, 0.01, 0.02), new MeshBasicMaterial({ color: 0x333333 }));
+    const g = new Mesh(new BoxGeometry(ROOM.w, 0.01, 0.02), gridMat);
     g.position.set(0, 0.01, i);
     gridGroup.add(g);
   }
@@ -284,7 +294,7 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   const devices = options.layout ? devicesFromLayout(options.layout) : DEVICES;
 
   for (const dev of devices) {
-    const mat = new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0 });
+    const mat = themedMaterial(new MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0 }), 0xdde1e7);
     const box = new Mesh(
       new BoxGeometry(dev.size.x, dev.size.y, dev.size.z),
       mat,
@@ -320,7 +330,7 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
 
   const uplinkRing = new Mesh(
     new TorusGeometry(0.55, 0.06, 8, 32),
-    new MeshBasicMaterial({ color: 0xffffff }),
+    themedMaterial(new MeshBasicMaterial({ color: 0xffffff }), 0x15171a),
   );
   uplinkRing.rotation.x = Math.PI / 2;
   uplinkGroup.add(uplinkRing);
@@ -352,12 +362,16 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     bloom: false,
   });
 
+  // EffectComposer sizes its targets with the pixel ratio the renderer had when it was created.
+  const composerRatio = renderer.getPixelRatio();
   const clock = new Clock();
   const frameTimes: number[] = [];
   let raf = 0;
   let running = false;
   let elapsed = 0;
   let eventTimer = 0;
+  let figureMode = false;
+  let bufferSize = { width: 0, height: 0 };
 
   // smooth focus animation
   let focusAnim: {
@@ -392,6 +406,7 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     camera.updateProjectionMatrix();
     renderContext.setSize(bufW, bufH);
     arcs.resize(bufW, bufH);
+    bufferSize = { width: bufW, height: bufH };
   }
 
   function render(): void {
@@ -435,6 +450,7 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   const hoverPointer = new Vector2();
 
   function updateHover(clientX: number, clientY: number): void {
+    if (figureMode) return;
     const rect = canvas.getBoundingClientRect();
     hoverPointer.set(
       ((clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1,
@@ -476,6 +492,59 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
   canvas.addEventListener('mousemove', onHoverMove);
   canvas.addEventListener('mouseleave', onHoverLeave);
 
+
+  function setFigureMode(on: boolean): void {
+    if (on === figureMode) return;
+    figureMode = on;
+    (scene.background as Color).setHex(on ? 0xffffff : 0x000000);
+    for (const entry of themed) entry.material.color.setHex(on ? entry.light : entry.dark);
+    arcs.setColor(on ? 0x15171a : 0xffffff);
+    // Literal colours for print: ACES would turn the white page into light grey.
+    renderer.toneMapping = on ? NoToneMapping : ACESFilmicToneMapping;
+    if (on && hoveredId) {
+      const m = materialById.get(hoveredId);
+      if (m) m.opacity = 1.0;
+      hoveredId = null;
+    }
+    canvas.style.cursor = on ? 'none' : '';
+  }
+
+  function captureFrame(width: number, height: number): HTMLCanvasElement {
+    const w = Math.round(width);
+    const h = Math.round(height);
+    const limit = renderer.capabilities.maxTextureSize;
+    if (w < 1 || h < 1 || w > limit || h > limit) {
+      throw new Error(`Cannot render ${w}×${h}: this GPU allows at most ${limit}px per side.`);
+    }
+    const previousRatio = renderer.getPixelRatio();
+    const previousAspect = camera.aspect;
+    try {
+      renderer.setPixelRatio(1);
+      renderContext.composer.setPixelRatio(1);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderContext.setSize(w, h);
+      arcs.resize(w, h);
+      renderContext.render();
+      // The drawing buffer is only valid until this task ends (no preserveDrawingBuffer),
+      // so copy it out right here instead of calling canvas.toBlob later.
+      const out = document.createElement('canvas');
+      out.width = w;
+      out.height = h;
+      const ctx = out.getContext('2d');
+      if (!ctx) throw new Error('2D canvas is not available.');
+      ctx.drawImage(canvas, 0, 0);
+      return out;
+    } finally {
+      renderer.setPixelRatio(previousRatio);
+      renderContext.composer.setPixelRatio(composerRatio);
+      camera.aspect = previousAspect;
+      camera.updateProjectionMatrix();
+      renderContext.setSize(bufferSize.width, bufferSize.height);
+      arcs.resize(bufferSize.width, bufferSize.height);
+      renderContext.render();
+    }
+  }
 
   const sceneApi: CityScene = {
     assetIds: devices.map((d) => d.id),
@@ -556,8 +625,18 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
     spawnArc(event: SecurityEvent): void {
       arcs.spawn(event);
     },
+    captureFrame,
+    setFigureMode,
+    getCameraPose(): CameraPose {
+      const round = (v: number): number => Math.round(v * 1000) / 1000;
+      return {
+        position: [round(camera.position.x), round(camera.position.y), round(camera.position.z)],
+        target: [round(controls.target.x), round(controls.target.y), round(controls.target.z)],
+        fov: camera.fov,
+      };
+    },
     highlight(id: string | null): void {
-      if (id === hoveredId) return;
+      if (figureMode || id === hoveredId) return;
       if (hoveredId) {
         const m = materialById.get(hoveredId);
         if (m) m.opacity = 1.0;
