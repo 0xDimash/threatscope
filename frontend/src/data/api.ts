@@ -44,6 +44,55 @@ export interface EventQuery {
   cursor?: string;
 }
 
+export type SpaceTemplate = 'room';
+export type SpaceComponentKind = 'rack' | 'switch' | 'pc' | 'nas' | 'cam' | 'iot';
+
+export interface SpaceComponent {
+  id: string;
+  kind: SpaceComponentKind;
+  x: number;
+  z: number;
+  asset_id: string | null;
+}
+
+export interface Space {
+  id: string;
+  name: string;
+  template: SpaceTemplate;
+  components: SpaceComponent[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SpacesResponse {
+  spaces: Space[];
+}
+
+export interface SpaceCreateRequest {
+  name: string;
+  template: SpaceTemplate;
+  components: SpaceComponent[];
+}
+
+export interface SpaceUpdateRequest {
+  name: string;
+  components: SpaceComponent[];
+}
+
+export interface SpaceRiskComponent {
+  id: string;
+  asset_id: string | null;
+  risk: number | null;
+  state: 'ok' | 'elevated' | 'critical' | 'compromised' | null;
+  events_24h: number;
+  last_event_ts: string | null;
+}
+
+export interface SpaceRiskResponse {
+  space_id: string;
+  components: SpaceRiskComponent[];
+}
+
 /** Raised for non-2xx responses so callers can show a useful message instead of `undefined`. */
 export class ApiError extends Error {
   constructor(
@@ -91,6 +140,51 @@ export function fetchAssetRisk(assetId: string, signal?: AbortSignal): Promise<R
   return getJson<RiskState>(`/api/assets/${encodeURIComponent(assetId)}/risk`, signal);
 }
 
+/** `GET /api/spaces` — list persisted room layouts. */
+export function listSpaces(signal?: AbortSignal): Promise<SpacesResponse> {
+  return getJson<SpacesResponse>('/api/spaces', signal);
+}
+
+/** `GET /api/spaces/{id}` — fetch one space. */
+export function getSpace(spaceId: string, signal?: AbortSignal): Promise<Space> {
+  return getJson<Space>(`/api/spaces/${encodeURIComponent(spaceId)}`, signal);
+}
+
+/** `POST /api/spaces` — create a space. */
+export function createSpace(
+  payload: SpaceCreateRequest,
+  signal?: AbortSignal,
+): Promise<Space> {
+  return requestJson<Space>('/api/spaces', 'POST', payload, signal);
+}
+
+/** `PUT /api/spaces/{id}` — replace a space name and components. */
+export function updateSpace(
+  spaceId: string,
+  payload: SpaceUpdateRequest,
+  signal?: AbortSignal,
+): Promise<Space> {
+  return requestJson<Space>(`/api/spaces/${encodeURIComponent(spaceId)}`, 'PUT', payload, signal);
+}
+
+/** `DELETE /api/spaces/{id}` — delete a space. */
+export async function deleteSpace(spaceId: string, signal?: AbortSignal): Promise<void> {
+  const path = `/api/spaces/${encodeURIComponent(spaceId)}`;
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: 'DELETE',
+    signal,
+    headers: { Accept: 'application/json' },
+  });
+  if (!response.ok) {
+    throw new ApiError(response.status, `DELETE ${path} failed with HTTP ${response.status}`);
+  }
+}
+
+/** `GET /api/spaces/{id}/risk` — per-component risk for a space. */
+export function getSpaceRisk(spaceId: string, signal?: AbortSignal): Promise<SpaceRiskResponse> {
+  return getJson<SpaceRiskResponse>(`/api/spaces/${encodeURIComponent(spaceId)}/risk`, signal);
+}
+
 async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     signal,
@@ -98,6 +192,27 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   });
   if (!response.ok) {
     throw new ApiError(response.status, `GET ${path} failed with HTTP ${response.status}`);
+  }
+  return (await response.json()) as T;
+}
+
+async function requestJson<T>(
+  path: string,
+  method: 'POST' | 'PUT',
+  body: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    method,
+    signal,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    throw new ApiError(response.status, `${method} ${path} failed with HTTP ${response.status}`);
   }
   return (await response.json()) as T;
 }

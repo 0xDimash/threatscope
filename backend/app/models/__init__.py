@@ -12,5 +12,6 @@ from __future__ import annotations
 from app.models.asset import Asset, Link
 from app.models.event import Event
 from app.models.risk import RiskSnapshot
+from app.models.space import Space
 
-__all__ = ["Asset", "Link", "Event", "RiskSnapshot"]
+__all__ = ["Asset", "Link", "Event", "RiskSnapshot", "Space"]
