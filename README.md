@@ -79,6 +79,8 @@ Prerequisites: Node 20+, Python 3.9+, Docker Desktop (optional).
 git clone git@github.com:0xDimash/threatscope.git
 cd threatscope
 cp .env.example .env
+# Set INGEST_TOKEN in .env (required for POST /api/ingest and /api/ingest/batch).
+# For local demo only, you can instead set DEMO_FEED=1 or ALLOW_UNAUTHENTICATED_INGEST=1.
 make up                       # docker: backend + frontend
 make simulate                 # stream synthetic attacks
 ```
@@ -86,9 +88,10 @@ make simulate                 # stream synthetic attacks
 Without Docker:
 
 ```bash
+# backend/.env or repo .env must provide INGEST_TOKEN, or an explicit demo escape hatch.
 make backend      # uvicorn on :8000
 make frontend     # vite on :5173
-make simulate     # stream fake attacks
+make simulate     # stream fake attacks; set INGEST_TOKEN to the same value as backend
 ```
 
 ---

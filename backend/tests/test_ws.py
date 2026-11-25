@@ -7,7 +7,9 @@ from pathlib import Path
 from typing import Any
 
 import anyio
+import pytest
 from fastapi.testclient import TestClient
+from starlette.websockets import WebSocketDisconnect
 
 from app.api.ws import ConnectionManager, manager
 from app.core.config import REPO_ROOT
@@ -188,3 +190,26 @@ def test_throttle_resets_when_the_last_client_leaves() -> None:
         assert await local.maybe_broadcast_state({}) is True
 
     anyio.run(scenario)
+
+
+def test_ws_rejects_non_filter_client_message(client: TestClient) -> None:
+    with client.websocket_connect("/ws/events") as socket:
+        socket.receive_json()  # initial state
+        socket.send_text("hello")
+        with pytest.raises(WebSocketDisconnect) as exc_info:
+            socket.receive_json()
+        assert exc_info.value.code == 1008
+
+
+def test_ws_accepts_reserved_filter_frame(client: TestClient) -> None:
+    event = sample_events()[0]
+    with client.websocket_connect("/ws/events") as socket:
+        socket.receive_json()  # initial state
+        socket.send_text(json.dumps({"kind": "filter", "data": {"severity": ["high"]}}))
+
+        response = client.post("/api/ingest/batch", json={"events": [event]})
+        assert response.status_code == 200
+
+        frame = socket.receive_json()
+        assert frame["kind"] == "event"
+        assert frame["data"]["id"] == event["id"]

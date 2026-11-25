@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     log_level: str = "info"
     #: Dev-only synthetic threat feed, controlled from ``POST /api/demo/feed``.
     demo_feed: bool = False
+    #: Bearer token required by /api/ingest and /api/ingest/batch.
+    ingest_token: str = ""
+    #: Explicit escape hatch for local/demo runs without ingest auth.
+    allow_unauthenticated_ingest: bool = False
 
     #: Shared asset inventory, relative to the repository root (owned by Design).
     assets_file: str = "data/assets.json"

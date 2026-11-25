@@ -24,6 +24,11 @@ if TYPE_CHECKING:
 
 _TMP_DIR = Path(tempfile.mkdtemp(prefix="threatscope-tests-"))
 os.environ["DATABASE_URL"] = f"sqlite+pysqlite:///{(_TMP_DIR / 'test.db').as_posix()}"
+os.environ.setdefault("ALLOW_UNAUTHENTICATED_INGEST", "1")
+
+from app.core.config import settings as _settings  # noqa: E402
+
+_settings.allow_unauthenticated_ingest = True
 
 #: Deterministic inventory for API tests. The shared ``data/assets.json`` is owned by Design
 #: and may grow; the frozen contract fixture keeps these assertions stable.
