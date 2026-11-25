@@ -239,6 +239,44 @@ host names that the inventory does not carry, the fix is an inventory alias, not
 - Suricata `flow_id`, `signature_id`, `category`, `rev`, `proto`, `app_proto` go into `meta`
   so an analyst can pivot back to the raw record.
 
+## Demo scenario
+
+`simulator/scenarios/ransomware-municipal.json` is a recorded, deterministic attack for
+demos and thesis defence. It plays 40 events over 180 seconds (3m00s) against the eight
+assets visible in the built-in room:
+
+`asset-municipal-dc`, `asset-egov-gateway`, `asset-egov-portal`, `asset-akimat-portal`,
+`asset-open-data-portal`, `asset-citizen-registry-db`, `asset-cctv-network`,
+`asset-transit-onay`.
+
+The story walks the kill chain in contract order
+(`reconnaissance → initial_access → c2 → exploitation → lateral_movement → impact`).
+Every stage has at least five events, so the kill-chain meter reaches 1.0 for each stage
+(`STAGE_SATURATION = 5` in `backend/app/services/kill_chain.py`).
+
+| Stage | Time | Events | What it proves |
+|---|---:|---:|---|
+| reconnaissance | 2–34s | 12 | External `203.0.113.0/24` hosts run active scanning and focused port scans across the public/perimeter surface (T1595, T1046). |
+| initial_access | 40–72s | 7 | Phishing lures reach portal operators, then password spraying / credential stuffing and a web exploit land on `asset-egov-portal` (T1566, T1110, T1190). |
+| c2 | 78–102s | 5 | The compromised portal (`src.asset_id = asset-egov-portal`) beacons over HTTPS through the gateway (T1071), proving internal-source arcs. |
+| exploitation | 108–124s | 5 | Ransomware is deployed on the portal, gateway, municipal DC and transit management host (T1486), mapped to the `exploitation` kill-chain stage. |
+| lateral_movement | 130–150s | 6 | The attacker pivots portal → gateway → municipal DC, then reaches the citizen registry, CCTV segment and open data portal via remote services (T1021). |
+| impact | 156–180s | 5 | Citizen records are staged and exfiltrated from `asset-citizen-registry-db` (T1041), while a DDoS hits the open data portal (T1498). |
+
+Run it deterministically:
+
+```bash
+make reset-db
+# terminal 1
+make dev-backend
+# terminal 2
+python3 simulator/simulate.py --scenario ransomware-municipal --speed 4
+```
+
+`--stdout` emits NDJSON without sleeping, so the same scenario can be saved as a replay file.
+Event ids are `scn-<scenario>-<run epoch>-<step index>`, so replaying the scenario creates
+fresh rows instead of being deduplicated by the repository.
+
 ## Open questions
 
 - ATT&CK mapping for Suricata signatures: by `signature` prefix, `category`, or both?

@@ -4,6 +4,8 @@ Emits SecurityEvents that match docs/api-contract.md and POSTs them to the backe
 
     python simulator/simulate.py --rate 2 --duration 60
     python simulator/simulate.py --stdout --count 10
+    python simulator/simulate.py --scenario ransomware-municipal --speed 4
+    python simulator/simulate.py --scenario ransomware-municipal --stdout
 """
 
 from __future__ import annotations
@@ -11,6 +13,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -19,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "assets.json"
+SCENARIOS_DIR = Path(__file__).resolve().parent / "scenarios"
 
 
 def load_assets() -> list[dict[str, Any]]:
@@ -47,6 +51,70 @@ def load_assets() -> list[dict[str, Any]]:
 
 
 ASSETS: list[dict[str, Any]] = load_assets()
+ASSETS_BY_ID: dict[str, dict[str, Any]] = {asset["id"]: asset for asset in ASSETS}
+
+# Canonical contract values (docs/threat-model.md); the random generator keeps its own
+# SEVERITY_RISK below for backward-compatible demo behaviour.
+RISK_DELTA: dict[str, float] = {
+    "info": 0.0,
+    "low": 1.0,
+    "medium": 4.0,
+    "high": 10.0,
+    "critical": 25.0,
+}
+SEVERITIES = set(RISK_DELTA)
+
+
+def load_scenario(name: str) -> list[dict[str, Any]]:
+    """Load a scripted scenario from ``simulator/scenarios/<name>.json``."""
+    safe = Path(name).name
+    if safe != name or not safe:
+        raise SystemExit(f"invalid scenario name: {name!r}")
+    path = SCENARIOS_DIR / f"{safe}.json"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise SystemExit(f"scenario not found: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise SystemExit(f"scenario is not valid JSON: {path}: {exc}") from exc
+    if not isinstance(payload, list):
+        raise SystemExit(f"scenario must be a JSON list of steps: {path}")
+    return payload
+
+
+def build_scenario_event(
+    scenario: str, run_epoch: int, index: int, step: dict[str, Any]
+) -> dict[str, Any]:
+    """Turn one scenario step into a contract-shaped SecurityEvent.
+
+    ``ts`` is the wall-clock time of emission (UTC ISO), not the scripted offset; the
+    offset only controls scheduling. ``id`` is unique per run so the repository does not
+    drop events when the same scenario is played again.
+    """
+    dst_id = step["dst_asset_id"]
+    target = ASSETS_BY_ID.get(dst_id)
+    if target is None:
+        raise SystemExit(f"step {index}: unknown dst_asset_id {dst_id!r}")
+    severity = step["severity"]
+    src = step.get("src") or {}
+    return {
+        "id": f"scn-{scenario}-{run_epoch}-{index}",
+        "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+        "type": step["type"],
+        "severity": severity,
+        "src": {
+            "ip": src.get("ip"),
+            "host": src.get("host"),
+            "asset_id": src.get("asset_id"),
+        },
+        "dst": {"ip": target["ip"], "host": target["host"], "asset_id": target["id"]},
+        "description": step.get("description"),
+        "mitre": step.get("mitre"),
+        "risk_delta": RISK_DELTA.get(severity, RISK_DELTA["info"]),
+        "raw_source": "simulator",
+        "meta": {"scenario": scenario, "step": index, "at": step.get("at")},
+    }
+
 
 ATTACKS: list[dict[str, Any]] = [
     {"type": "port_scan", "severity": "low", "tactic": "discovery", "technique_id": "T1046", "technique": "Network Service Discovery"},
@@ -99,15 +167,7 @@ def post_batch(url: str, events: list[dict[str, Any]]) -> None:
         print(f"[simulator] backend unreachable: {exc}", flush=True)
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="ThreatScope synthetic event feed")
-    parser.add_argument("--url", default="http://localhost:8000/api/ingest/batch")
-    parser.add_argument("--rate", type=float, default=1.0, help="events per second")
-    parser.add_argument("--duration", type=float, default=0.0, help="seconds; 0 = forever")
-    parser.add_argument("--count", type=int, default=0, help="fixed number of events")
-    parser.add_argument("--stdout", action="store_true", help="print NDJSON instead of POSTing")
-    args = parser.parse_args()
-
+def run_random(args: argparse.Namespace) -> None:
     started = time.monotonic()
     sent = 0
     while True:
@@ -122,7 +182,47 @@ def main() -> None:
         if args.duration and time.monotonic() - started >= args.duration:
             break
         if not args.stdout:
-            time.sleep(1.0 / args.rate)
+            time.sleep(1.0 / max(args.rate, 1e-6))
+
+
+def run_scenario(args: argparse.Namespace) -> None:
+    steps = load_scenario(args.scenario)
+    ordered = sorted(
+        enumerate(steps),
+        key=lambda item: (float(item[1].get("at", 0)), item[0]),
+    )
+    run_epoch = int(time.time() * 1000)
+    speed = max(args.speed, 1e-6)
+    started = time.monotonic()
+
+    for index, step in ordered:
+        due = float(step.get("at", 0)) / speed
+        if not args.stdout:
+            delay = started + due - time.monotonic()
+            if delay > 0:
+                time.sleep(delay)
+        event = build_scenario_event(args.scenario, run_epoch, index, step)
+        if args.stdout:
+            print(json.dumps(event), flush=True)
+        else:
+            post_batch(args.url, [event])
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="ThreatScope synthetic event feed")
+    parser.add_argument("--url", default="http://localhost:8000/api/ingest/batch")
+    parser.add_argument("--rate", type=float, default=1.0, help="events per second (random mode)")
+    parser.add_argument("--duration", type=float, default=0.0, help="seconds; 0 = forever (random mode)")
+    parser.add_argument("--count", type=int, default=0, help="fixed number of events (random mode)")
+    parser.add_argument("--stdout", action="store_true", help="print NDJSON instead of POSTing")
+    parser.add_argument("--scenario", help="play a scripted scenario from simulator/scenarios/<name>.json")
+    parser.add_argument("--speed", type=float, default=1.0, help="scenario playback speed multiplier")
+    args = parser.parse_args()
+
+    if args.scenario:
+        run_scenario(args)
+        return
+    run_random(args)
 
 
 if __name__ == "__main__":

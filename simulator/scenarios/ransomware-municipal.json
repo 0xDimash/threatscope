@@ -1,0 +1,682 @@
+[
+  {
+    "at": 2,
+    "type": "recon",
+    "severity": "low",
+    "src": {
+      "ip": "203.0.113.10",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-egov-gateway",
+    "mitre": {
+      "tactic": "reconnaissance",
+      "technique_id": "T1595",
+      "technique": "Active Scanning"
+    },
+    "description": "TCP SYN probe against egov gateway perimeter"
+  },
+  {
+    "at": 5,
+    "type": "recon",
+    "severity": "low",
+    "src": {
+      "ip": "203.0.113.11",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-egov-portal",
+    "mitre": {
+      "tactic": "reconnaissance",
+      "technique_id": "T1595",
+      "technique": "Active Scanning"
+    },
+    "description": "TCP SYN sweep across 1-1024 on egov portal"
+  },
+  {
+    "at": 8,
+    "type": "recon",
+    "severity": "low",
+    "src": {
+      "ip": "203.0.113.12",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-akimat-portal",
+    "mitre": {
+      "tactic": "reconnaissance",
+      "technique_id": "T1595",
+      "technique": "Active Scanning"
+    },
+    "description": "Service fingerprinting on akimat portal"
+  },
+  {
+    "at": 11,
+    "type": "recon",
+    "severity": "low",
+    "src": {
+      "ip": "203.0.113.13",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-open-data-portal",
+    "mitre": {
+      "tactic": "reconnaissance",
+      "technique_id": "T1595",
+      "technique": "Active Scanning"
+    },
+    "description": "HTTP banner grab on open data portal"
+  },
+  {
+    "at": 14,
+    "type": "recon",
+    "severity": "low",
+    "src": {
+      "ip": "203.0.113.14",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-cctv-network",
+    "mitre": {
+      "tactic": "reconnaissance",
+      "technique_id": "T1595",
+      "technique": "Active Scanning"
+    },
+    "description": "RTSP port probe on CCTV network"
+  },
+  {
+    "at": 17,
+    "type": "recon",
+    "severity": "low",
+    "src": {
+      "ip": "203.0.113.15",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-transit-onay",
+    "mitre": {
+      "tactic": "reconnaissance",
+      "technique_id": "T1595",
+      "technique": "Active Scanning"
+    },
+    "description": "Modbus/TCP discovery on transit ONAY controller"
+  },
+  {
+    "at": 20,
+    "type": "recon",
+    "severity": "low",
+    "src": {
+      "ip": "203.0.113.16",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-municipal-dc",
+    "mitre": {
+      "tactic": "reconnaissance",
+      "technique_id": "T1595",
+      "technique": "Active Scanning"
+    },
+    "description": "LDAP port probe against municipal DC"
+  },
+  {
+    "at": 23,
+    "type": "recon",
+    "severity": "low",
+    "src": {
+      "ip": "203.0.113.17",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-citizen-registry-db",
+    "mitre": {
+      "tactic": "reconnaissance",
+      "technique_id": "T1595",
+      "technique": "Active Scanning"
+    },
+    "description": "Database port scan against citizen registry"
+  },
+  {
+    "at": 28,
+    "type": "port_scan",
+    "severity": "medium",
+    "src": {
+      "ip": "203.0.113.44",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-egov-portal",
+    "mitre": {
+      "tactic": "discovery",
+      "technique_id": "T1046",
+      "technique": "Network Service Discovery"
+    },
+    "description": "Focused port scan 80,443,8080 on egov portal"
+  },
+  {
+    "at": 30,
+    "type": "port_scan",
+    "severity": "medium",
+    "src": {
+      "ip": "203.0.113.44",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-egov-gateway",
+    "mitre": {
+      "tactic": "discovery",
+      "technique_id": "T1046",
+      "technique": "Network Service Discovery"
+    },
+    "description": "Focused port scan 443,8443 on egov gateway"
+  },
+  {
+    "at": 32,
+    "type": "port_scan",
+    "severity": "medium",
+    "src": {
+      "ip": "203.0.113.44",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-akimat-portal",
+    "mitre": {
+      "tactic": "discovery",
+      "technique_id": "T1046",
+      "technique": "Network Service Discovery"
+    },
+    "description": "Focused port scan 80,443 on akimat portal"
+  },
+  {
+    "at": 34,
+    "type": "port_scan",
+    "severity": "medium",
+    "src": {
+      "ip": "203.0.113.44",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-open-data-portal",
+    "mitre": {
+      "tactic": "discovery",
+      "technique_id": "T1046",
+      "technique": "Network Service Discovery"
+    },
+    "description": "Focused port scan 80,443 on open data portal"
+  },
+  {
+    "at": 40,
+    "type": "phishing",
+    "severity": "medium",
+    "src": {
+      "ip": "203.0.113.51",
+      "host": "mail-spoof",
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-egov-portal",
+    "mitre": {
+      "tactic": "initial-access",
+      "technique_id": "T1566",
+      "technique": "Phishing"
+    },
+    "description": "Spearphishing email with malicious link delivered to egov portal admin"
+  },
+  {
+    "at": 45,
+    "type": "phishing",
+    "severity": "medium",
+    "src": {
+      "ip": "203.0.113.51",
+      "host": "mail-spoof",
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-akimat-portal",
+    "mitre": {
+      "tactic": "initial-access",
+      "technique_id": "T1566",
+      "technique": "Phishing"
+    },
+    "description": "Phishing lure targeting akimat portal operator mailbox"
+  },
+  {
+    "at": 52,
+    "type": "credential_attack",
+    "severity": "high",
+    "src": {
+      "ip": "203.0.113.60",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-egov-portal",
+    "mitre": {
+      "tactic": "credential-access",
+      "technique_id": "T1110",
+      "technique": "Brute Force"
+    },
+    "description": "Password spraying against egov portal login"
+  },
+  {
+    "at": 56,
+    "type": "credential_attack",
+    "severity": "high",
+    "src": {
+      "ip": "203.0.113.60",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-egov-portal",
+    "mitre": {
+      "tactic": "credential-access",
+      "technique_id": "T1110",
+      "technique": "Brute Force"
+    },
+    "description": "Rapid credential stuffing burst on egov portal"
+  },
+  {
+    "at": 60,
+    "type": "credential_attack",
+    "severity": "high",
+    "src": {
+      "ip": "203.0.113.60",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-egov-portal",
+    "mitre": {
+      "tactic": "credential-access",
+      "technique_id": "T1110",
+      "technique": "Brute Force"
+    },
+    "description": "Successful credential guess on egov portal admin account"
+  },
+  {
+    "at": 66,
+    "type": "credential_attack",
+    "severity": "medium",
+    "src": {
+      "ip": "203.0.113.60",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-open-data-portal",
+    "mitre": {
+      "tactic": "credential-access",
+      "technique_id": "T1110",
+      "technique": "Brute Force"
+    },
+    "description": "Credential reuse attempt against open data portal"
+  },
+  {
+    "at": 72,
+    "type": "web_attack",
+    "severity": "high",
+    "src": {
+      "ip": "203.0.113.60",
+      "host": null,
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-egov-portal",
+    "mitre": {
+      "tactic": "initial-access",
+      "technique_id": "T1190",
+      "technique": "Exploit Public-Facing Application"
+    },
+    "description": "Exploit attempt against egov portal upload endpoint"
+  },
+  {
+    "at": 78,
+    "type": "c2_beacon",
+    "severity": "high",
+    "src": {
+      "ip": "10.10.4.21",
+      "host": "egov-portal",
+      "asset_id": "asset-egov-portal"
+    },
+    "dst_asset_id": "asset-egov-gateway",
+    "mitre": {
+      "tactic": "command-and-control",
+      "technique_id": "T1071",
+      "technique": "Application Layer Protocol"
+    },
+    "description": "HTTPS beacon 1 from compromised egov portal to external C2 via gateway"
+  },
+  {
+    "at": 84,
+    "type": "c2_beacon",
+    "severity": "high",
+    "src": {
+      "ip": "10.10.4.21",
+      "host": "egov-portal",
+      "asset_id": "asset-egov-portal"
+    },
+    "dst_asset_id": "asset-egov-gateway",
+    "mitre": {
+      "tactic": "command-and-control",
+      "technique_id": "T1071",
+      "technique": "Application Layer Protocol"
+    },
+    "description": "HTTPS beacon 2 from compromised egov portal to external C2 via gateway"
+  },
+  {
+    "at": 90,
+    "type": "c2_beacon",
+    "severity": "high",
+    "src": {
+      "ip": "10.10.4.21",
+      "host": "egov-portal",
+      "asset_id": "asset-egov-portal"
+    },
+    "dst_asset_id": "asset-egov-gateway",
+    "mitre": {
+      "tactic": "command-and-control",
+      "technique_id": "T1071",
+      "technique": "Application Layer Protocol"
+    },
+    "description": "HTTPS beacon 3 from compromised egov portal to external C2 via gateway"
+  },
+  {
+    "at": 96,
+    "type": "c2_beacon",
+    "severity": "high",
+    "src": {
+      "ip": "10.10.4.21",
+      "host": "egov-portal",
+      "asset_id": "asset-egov-portal"
+    },
+    "dst_asset_id": "asset-egov-gateway",
+    "mitre": {
+      "tactic": "command-and-control",
+      "technique_id": "T1071",
+      "technique": "Application Layer Protocol"
+    },
+    "description": "HTTPS beacon 4 from compromised egov portal to external C2 via gateway"
+  },
+  {
+    "at": 102,
+    "type": "c2_beacon",
+    "severity": "high",
+    "src": {
+      "ip": "10.10.4.21",
+      "host": "egov-portal",
+      "asset_id": "asset-egov-portal"
+    },
+    "dst_asset_id": "asset-egov-gateway",
+    "mitre": {
+      "tactic": "command-and-control",
+      "technique_id": "T1071",
+      "technique": "Application Layer Protocol"
+    },
+    "description": "HTTPS beacon 5 from compromised egov portal to external C2 via gateway"
+  },
+  {
+    "at": 108,
+    "type": "ransomware",
+    "severity": "critical",
+    "src": {
+      "ip": "10.10.4.21",
+      "host": "egov-portal",
+      "asset_id": "asset-egov-portal"
+    },
+    "dst_asset_id": "asset-egov-portal",
+    "mitre": {
+      "tactic": "impact",
+      "technique_id": "T1486",
+      "technique": "Data Encrypted for Impact"
+    },
+    "description": "Ransomware payload dropped on compromised egov portal"
+  },
+  {
+    "at": 112,
+    "type": "ransomware",
+    "severity": "critical",
+    "src": {
+      "ip": "10.10.4.21",
+      "host": "egov-portal",
+      "asset_id": "asset-egov-portal"
+    },
+    "dst_asset_id": "asset-egov-gateway",
+    "mitre": {
+      "tactic": "impact",
+      "technique_id": "T1486",
+      "technique": "Data Encrypted for Impact"
+    },
+    "description": "Ransomware encrypts egov gateway configuration store"
+  },
+  {
+    "at": 116,
+    "type": "ransomware",
+    "severity": "critical",
+    "src": {
+      "ip": "10.10.4.21",
+      "host": "egov-portal",
+      "asset_id": "asset-egov-portal"
+    },
+    "dst_asset_id": "asset-municipal-dc",
+    "mitre": {
+      "tactic": "impact",
+      "technique_id": "T1486",
+      "technique": "Data Encrypted for Impact"
+    },
+    "description": "Ransomware payload pushed to municipal DC via compromised portal session"
+  },
+  {
+    "at": 120,
+    "type": "ransomware",
+    "severity": "critical",
+    "src": {
+      "ip": "10.10.1.10",
+      "host": "municipal-dc",
+      "asset_id": "asset-municipal-dc"
+    },
+    "dst_asset_id": "asset-municipal-dc",
+    "mitre": {
+      "tactic": "impact",
+      "technique_id": "T1486",
+      "technique": "Data Encrypted for Impact"
+    },
+    "description": "File encryption started on municipal DC shares"
+  },
+  {
+    "at": 124,
+    "type": "ransomware",
+    "severity": "critical",
+    "src": {
+      "ip": "10.10.1.10",
+      "host": "municipal-dc",
+      "asset_id": "asset-municipal-dc"
+    },
+    "dst_asset_id": "asset-transit-onay",
+    "mitre": {
+      "tactic": "impact",
+      "technique_id": "T1486",
+      "technique": "Data Encrypted for Impact"
+    },
+    "description": "Ransomware impact reaching transit ONAY management host"
+  },
+  {
+    "at": 130,
+    "type": "lateral_movement",
+    "severity": "high",
+    "src": {
+      "ip": "10.10.4.21",
+      "host": "egov-portal",
+      "asset_id": "asset-egov-portal"
+    },
+    "dst_asset_id": "asset-egov-gateway",
+    "mitre": {
+      "tactic": "lateral-movement",
+      "technique_id": "T1021",
+      "technique": "Remote Services"
+    },
+    "description": "SMB lateral movement from egov portal to egov gateway"
+  },
+  {
+    "at": 134,
+    "type": "lateral_movement",
+    "severity": "high",
+    "src": {
+      "ip": "10.10.0.2",
+      "host": "egov-gateway",
+      "asset_id": "asset-egov-gateway"
+    },
+    "dst_asset_id": "asset-municipal-dc",
+    "mitre": {
+      "tactic": "lateral-movement",
+      "technique_id": "T1021",
+      "technique": "Remote Services"
+    },
+    "description": "RDP lateral movement from egov gateway to municipal DC"
+  },
+  {
+    "at": 138,
+    "type": "lateral_movement",
+    "severity": "high",
+    "src": {
+      "ip": "10.10.0.2",
+      "host": "egov-gateway",
+      "asset_id": "asset-egov-gateway"
+    },
+    "dst_asset_id": "asset-municipal-dc",
+    "mitre": {
+      "tactic": "lateral-movement",
+      "technique_id": "T1021",
+      "technique": "Remote Services"
+    },
+    "description": "Service account pivot to municipal DC"
+  },
+  {
+    "at": 142,
+    "type": "lateral_movement",
+    "severity": "medium",
+    "src": {
+      "ip": "10.10.1.10",
+      "host": "municipal-dc",
+      "asset_id": "asset-municipal-dc"
+    },
+    "dst_asset_id": "asset-citizen-registry-db",
+    "mitre": {
+      "tactic": "lateral-movement",
+      "technique_id": "T1021",
+      "technique": "Remote Services"
+    },
+    "description": "Lateral SMB connection from municipal DC to citizen registry DB"
+  },
+  {
+    "at": 146,
+    "type": "lateral_movement",
+    "severity": "medium",
+    "src": {
+      "ip": "10.10.1.10",
+      "host": "municipal-dc",
+      "asset_id": "asset-municipal-dc"
+    },
+    "dst_asset_id": "asset-cctv-network",
+    "mitre": {
+      "tactic": "lateral-movement",
+      "technique_id": "T1021",
+      "technique": "Remote Services"
+    },
+    "description": "Lateral movement attempt from municipal DC to CCTV network segment"
+  },
+  {
+    "at": 150,
+    "type": "lateral_movement",
+    "severity": "medium",
+    "src": {
+      "ip": "10.10.1.10",
+      "host": "municipal-dc",
+      "asset_id": "asset-municipal-dc"
+    },
+    "dst_asset_id": "asset-open-data-portal",
+    "mitre": {
+      "tactic": "lateral-movement",
+      "technique_id": "T1021",
+      "technique": "Remote Services"
+    },
+    "description": "Lateral movement from municipal DC to open data portal admin host"
+  },
+  {
+    "at": 156,
+    "type": "data_exfiltration",
+    "severity": "critical",
+    "src": {
+      "ip": "10.10.2.5",
+      "host": "citizen-registry-db",
+      "asset_id": "asset-citizen-registry-db"
+    },
+    "dst_asset_id": "asset-citizen-registry-db",
+    "mitre": {
+      "tactic": "exfiltration",
+      "technique_id": "T1041",
+      "technique": "Exfiltration Over C2 Channel"
+    },
+    "description": "Bulk citizen record query staged for exfiltration"
+  },
+  {
+    "at": 162,
+    "type": "data_exfiltration",
+    "severity": "critical",
+    "src": {
+      "ip": "10.10.2.5",
+      "host": "citizen-registry-db",
+      "asset_id": "asset-citizen-registry-db"
+    },
+    "dst_asset_id": "asset-citizen-registry-db",
+    "mitre": {
+      "tactic": "exfiltration",
+      "technique_id": "T1041",
+      "technique": "Exfiltration Over C2 Channel"
+    },
+    "description": "Compressed archive exfiltrated from citizen registry DB"
+  },
+  {
+    "at": 168,
+    "type": "data_exfiltration",
+    "severity": "critical",
+    "src": {
+      "ip": "10.10.2.5",
+      "host": "citizen-registry-db",
+      "asset_id": "asset-citizen-registry-db"
+    },
+    "dst_asset_id": "asset-citizen-registry-db",
+    "mitre": {
+      "tactic": "exfiltration",
+      "technique_id": "T1041",
+      "technique": "Exfiltration Over C2 Channel"
+    },
+    "description": "Second exfiltration tranche from citizen registry DB"
+  },
+  {
+    "at": 174,
+    "type": "ddos",
+    "severity": "high",
+    "src": {
+      "ip": "203.0.113.200",
+      "host": "botnet-node",
+      "asset_id": null
+    },
+    "dst_asset_id": "asset-open-data-portal",
+    "mitre": {
+      "tactic": "impact",
+      "technique_id": "T1498",
+      "technique": "Network Denial of Service"
+    },
+    "description": "Volumetric DDoS against open data portal during exfiltration"
+  },
+  {
+    "at": 180,
+    "type": "data_exfiltration",
+    "severity": "critical",
+    "src": {
+      "ip": "10.10.2.5",
+      "host": "citizen-registry-db",
+      "asset_id": "asset-citizen-registry-db"
+    },
+    "dst_asset_id": "asset-municipal-dc",
+    "mitre": {
+      "tactic": "exfiltration",
+      "technique_id": "T1041",
+      "technique": "Exfiltration Over C2 Channel"
+    },
+    "description": "Final exfiltration hop through municipal DC egress"
+  }
+]
