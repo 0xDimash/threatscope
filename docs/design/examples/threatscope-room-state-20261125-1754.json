@@ -1,0 +1,86 @@
+{
+  "schema": "threatscope.figure-state/1",
+  "exported_at": "2026-11-25T12:54:58.848Z",
+  "space": "room",
+  "figure_mode": true,
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "device_pixel_ratio": 2
+  },
+  "settings": {
+    "bloom": true,
+    "labels": true
+  },
+  "camera": {
+    "position": [
+      6,
+      4.9,
+      5.6
+    ],
+    "target": [
+      2,
+      1.9,
+      1.6
+    ],
+    "fov": 55
+  },
+  "api_state": {
+    "threat_level": "severe",
+    "counts": {
+      "info": 0,
+      "low": 57216,
+      "medium": 57102,
+      "high": 85817,
+      "critical": 113390
+    },
+    "compromised_assets": 15,
+    "kill_chain": {
+      "reconnaissance": 1,
+      "initial_access": 1,
+      "c2": 1,
+      "exploitation": 1,
+      "lateral_movement": 1,
+      "impact": 1
+    },
+    "top_types": [
+      {
+        "type": "recon",
+        "count": 28738
+      },
+      {
+        "type": "c2_beacon",
+        "count": 28644
+      },
+      {
+        "type": "scada_intrusion",
+        "count": 28638
+      },
+      {
+        "type": "lateral_movement",
+        "count": 28616
+      },
+      {
+        "type": "phishing",
+        "count": 28613
+      }
+    ]
+  },
+  "selected_asset": {
+    "asset_id": "asset-open-data-portal",
+    "risk": {
+      "asset_id": "asset-open-data-portal",
+      "risk": 100,
+      "state": "compromised",
+      "events_24h": 2076,
+      "last_event_ts": "2026-11-25T12:54:51.264Z",
+      "top_types": [
+        "web_attack",
+        "phishing",
+        "credential_attack"
+      ]
+    }
+  },
+  "replay": null,
+  "errors": []
+}
