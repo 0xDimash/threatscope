@@ -1,0 +1,30 @@
+<34>Oct 11 22:14:15 bastion sshd[1234]: Failed password for invalid user admin from 203.0.113.44 port 50122 ssh2
+<34>Oct 11 22:14:16 bastion sshd[1234]: Failed password for root from 203.0.113.44 port 50123 ssh2
+<34>Oct 11 22:14:17 bastion sshd[1234]: Invalid user test from 203.0.113.45 port 50124 ssh2
+<38>Nov 10 09:14:22 edge-fw sshd[2001]: Failed password for deploy from 198.51.100.23 port 41234 ssh2
+<165>1 2026-11-10T09:14:22.481Z bastion sshd 2222 - - Failed password for invalid user postgres from 203.0.113.44 port 50125 ssh2
+<165>1 2026-11-10T09:14:23.000Z bastion sshd 2222 - - Accepted password for admin from 203.0.113.44 port 50126 ssh2
+<165>1 2026-11-10T09:15:00.000Z bastion sshd 3333 - - Accepted publickey for deploy from 198.51.100.99 port 60000 ssh2
+<34>Oct 11 22:15:01 bastion sshd[1234]: Accepted password for root from 203.0.113.45 port 50130 ssh2
+<85>Oct 11 22:16:01 bastion sudo: pam_unix(sudo:auth): authentication failure; logname= uid=1000 euid=0 tty=/dev/pts/0 ruser=bob rhost=  user=bob
+<85>Oct 11 22:16:05 bastion sudo:    bob : 3 incorrect password attempts ; TTY=pts/0 ; PWD=/home/bob ; USER=root ; COMMAND=/bin/cat /etc/shadow
+<34>Nov 10 10:00:01 bastion su[4321]: FAILED su for root by alice
+<34>Nov 10 10:00:05 bastion su[4321]: pam_unix(su:auth): authentication failure; logname=alice uid=1001 euid=0 tty=/dev/pts/1 ruser=alice rhost=  user=root
+<13>Nov 10 10:05:01 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=aa:bb SRC=203.0.113.77 DST=10.10.4.21 LEN=44 TOS=0x00 PREC=0x00 TTL=248 ID=54321 PROTO=TCP SPT=45678 DPT=22 WINDOW=1024 RES=0x00 SYN URGP=0
+<13>Nov 10 10:05:02 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=aa:bb SRC=203.0.113.77 DST=10.10.4.21 LEN=44 TOS=0x00 PREC=0x00 TTL=248 ID=54322 PROTO=TCP SPT=45678 DPT=23 WINDOW=1024 RES=0x00 SYN URGP=0
+<13>Nov 10 10:05:03 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=aa:bb SRC=203.0.113.77 DST=10.10.4.21 LEN=44 TOS=0x00 PREC=0x00 TTL=248 ID=54323 PROTO=TCP SPT=45678 DPT=80 WINDOW=1024 RES=0x00 SYN URGP=0
+<13>Nov 10 10:05:04 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=aa:bb SRC=203.0.113.77 DST=10.10.4.21 LEN=44 TOS=0x00 PREC=0x00 TTL=248 ID=54324 PROTO=TCP SPT=45678 DPT=443 WINDOW=1024 RES=0x00 SYN URGP=0
+<13>Nov 10 10:05:05 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=aa:bb SRC=203.0.113.77 DST=10.10.4.21 LEN=44 TOS=0x00 PREC=0x00 TTL=248 ID=54325 PROTO=TCP SPT=45678 DPT=8080 WINDOW=1024 RES=0x00 SYN URGP=0
+<13>Nov 10 10:05:06 fw01 kernel: [UFW BLOCK] IN=eth0 OUT= MAC=aa:bb SRC=203.0.113.77 DST=10.10.4.21 LEN=44 TOS=0x00 PREC=0x00 TTL=248 ID=54326 PROTO=TCP SPT=45678 DPT=8443 WINDOW=1024 RES=0x00 SYN URGP=0
+<165>1 2026-11-10T10:06:00.000Z fw01 iptables 1 - - DROP IN=eth0 SRC=198.51.100.10 DST=10.10.1.10 PROTO=TCP SPT=1111 DPT=22
+<165>1 2026-11-10T10:06:01.000Z fw01 iptables 1 - - DROP IN=eth0 SRC=198.51.100.10 DST=10.10.1.10 PROTO=TCP SPT=1111 DPT=23
+<165>1 2026-11-10T10:06:02.000Z fw01 iptables 1 - - DROP IN=eth0 SRC=198.51.100.10 DST=10.10.1.10 PROTO=TCP SPT=1111 DPT=25
+<165>1 2026-11-10T10:06:03.000Z fw01 iptables 1 - - DROP IN=eth0 SRC=198.51.100.10 DST=10.10.1.10 PROTO=TCP SPT=1111 DPT=53
+<165>1 2026-11-10T10:06:04.000Z fw01 iptables 1 - - DROP IN=eth0 SRC=198.51.100.10 DST=10.10.1.10 PROTO=TCP SPT=1111 DPT=110
+THIS IS NOT SYSLOG
+<99999>bad line
+just some random garbage
+਍
+<34>Oct 11 22:20:00 bastion sshd[1234]: Connection closed by 10.0.0.1 port 22
+<13>Nov 10 10:07:00 fw01 kernel: [UFW BLOCK] IN=eth0 SRC=203.0.113.88 DST=10.10.4.21 PROTO=TCP SPT=3333 DPT=22
+{ "json": "not syslog" }
