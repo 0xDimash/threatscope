@@ -227,6 +227,29 @@ lookup turns them into `asset_id`s.
 No fuzzy matching, no DNS: a wrong arc is worse than a missing one. If a source only knows
 host names that the inventory does not carry, the fix is an inventory alias, not a heuristic.
 
+## Syslog mapping
+
+Implemented in `backend/app/ingest/syslog.py` (`parse_syslog`). The parser accepts RFC 3164
+(no year) and RFC 5424 timestamps and normalises both to ISO-8601 UTC. Lines that do not match
+a known pattern, or that cannot be parsed, are skipped and never raise.
+
+| Syslog pattern | Contract `type` | Severity | ATT&CK | Tactic |
+|---|---|---|---|---|
+| sshd `Failed password` / `Invalid user` | `credential_attack` | high | T1110 Brute Force | credential-access |
+| sshd `Accepted password` / `Accepted publickey` after prior failure from same IP (same batch) | `credential_attack` | high | T1110 Brute Force | credential-access |
+| iptables / ufw `BLOCK` or `DROP` lines, many destination ports from one source | `port_scan` | medium | T1046 Network Service Discovery | discovery |
+| sudo / su authentication failure | `credential_attack` | low | T1110 Brute Force | credential-access |
+
+Notes:
+
+- "Many destination ports" uses a threshold of 5 distinct destination ports per
+  `(src_ip, dst_ip)` pair within the parsed batch; one `port_scan` event is emitted when the
+  threshold is crossed.
+- A successful sshd login with no prior failure from the same IP in the batch is not emitted as
+  a threat event.
+- RFC 3164 timestamps have no year; the parser assigns the current UTC year and rolls back one
+  year if the result would be more than a day in the future.
+
 ## Data hygiene rules
 
 - One malformed row must never drop a capture: rows with an unparseable `ts` are skipped.
