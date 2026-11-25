@@ -1,16 +1,16 @@
 """Live feed at ``/ws/events``.
 
-Server -> client only (contract v0.1). Every frame is ``{kind, data}`` with ``kind`` one of
-``event``, ``state``, ``risk``. This module emits ``event`` frames on ingest and throttled
-``state`` and ``risk`` frames (about once per second).
+Server -> client frames are ``{kind, data}`` with ``kind`` one of ``event``, ``state``,
+``risk``. This module emits ``event`` frames on ingest and throttled ``state`` and ``risk``
+frames (about once per second).
 
-The manager keeps no background tasks: state is emitted from the same request that produced
-new data, so there is nothing to leak when a client disconnects. A connection occupies exactly
-one coroutine, which ends when the socket closes.
+Client -> server messages are limited to the reserved ``filter`` frame; other client messages
+are rejected. The socket stays open/read-only for normal clients.
 """
 
 from __future__ import annotations
 
+import json
 import time
 from collections.abc import Callable, Iterable
 from typing import Any, Optional
@@ -112,12 +112,20 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
+def _is_reserved_filter_frame(message: str) -> bool:
+    try:
+        payload = json.loads(message)
+    except json.JSONDecodeError:
+        return False
+    return isinstance(payload, dict) and payload.get("kind") == "filter"
+
+
 @router.websocket("/ws/events")
 async def events_socket(websocket: WebSocket) -> None:
     """Accept a client and keep the connection open until it goes away.
 
-    The client may send anything; unknown frames (including the future ``filter`` frame) are
-    ignored. Sending is one-way for now.
+    Server -> client is the normal direction. The only accepted client message is the reserved
+    ``{"kind":"filter", ...}`` frame; any other client message is rejected.
     """
     await websocket.accept()
     await manager.connect(websocket)
@@ -126,8 +134,13 @@ async def events_socket(websocket: WebSocket) -> None:
         await websocket.send_json({"kind": "state", "data": state})
         while True:
             message = await websocket.receive_text()
-            if message.strip().lower() == "ping":
-                await websocket.send_text("pong")
+            if _is_reserved_filter_frame(message):
+                continue
+            await websocket.close(
+                code=1008,
+                reason="Only the reserved filter frame is accepted from clients.",
+            )
+            return
     except WebSocketDisconnect:
         pass
     finally:

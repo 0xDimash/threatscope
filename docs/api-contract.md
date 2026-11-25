@@ -100,6 +100,22 @@ backend stores it only so layouts are reproducible.
 }
 ```
 
+## Authentication
+
+Write ingestion endpoints require `Authorization: Bearer <INGEST_TOKEN>`:
+
+- `POST /api/ingest`
+- `POST /api/ingest/batch`
+
+Missing or invalid credentials return `401` with a readable `detail`. `INGEST_TOKEN` is
+configured through environment/config; never commit a real token. If `INGEST_TOKEN` is unset,
+the backend refuses startup unless `DEMO_FEED=1` or `ALLOW_UNAUTHENTICATED_INGEST=1` is
+explicitly set for local/demo use. In that explicit unauthenticated mode, the backend logs a
+warning.
+
+`/ws/events` remains read-only and open. Client messages are limited to the reserved
+`{"kind":"filter","data":...}` frame; other client messages are rejected.
+
 ## Endpoints (owned by Cyber B)
 
 | Method | Path | Purpose |
@@ -108,12 +124,14 @@ backend stores it only so layouts are reproducible.
 | GET | `/api/events` | query: `from,to,severity,type,asset_id,limit,cursor` → `{ events, next_cursor }` |
 | GET | `/api/assets/{id}/risk` | `RiskState` |
 | GET | `/api/state` | aggregate state |
-| WS | `/ws/events` | live frames, see below |
+| POST | `/api/ingest` | raw adapter ingest; requires bearer ingest token |
+| POST | `/api/ingest/batch` | normalized batch ingest; requires bearer ingest token |
+| WS | `/ws/events` | live frames, see below; client sends only reserved `filter` |
 | GET | `/healthz` | `{ "status": "ok" }` |
 
 ## WebSocket frames
 
-Server → client only (v0.1). Every frame:
+Server → client. Every frame:
 
 ```jsonc
 { "kind": "event", "data": { /* SecurityEvent */ } }
@@ -121,7 +139,13 @@ Server → client only (v0.1). Every frame:
 { "kind": "risk",  "data": { /* RiskState */ } }
 ```
 
-Client → server (optional, phase 4+): `{ "kind": "filter", "data": { "severity": [...] } }`.
+Client → server: only the reserved filter frame is accepted:
+
+```jsonc
+{ "kind": "filter", "data": { "severity": ["high", "critical"] } }
+```
+
+Any other client message is rejected.
 
 ## Rules
 

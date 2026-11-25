@@ -14,18 +14,46 @@ the database work runs in the threadpool, the fan-out stays on the event loop.
 
 from __future__ import annotations
 
-from typing import Any, Callable
+import hmac
+from typing import Annotated, Any, Callable
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from starlette.concurrency import run_in_threadpool
 
 from app.api.deps import SessionDep
 from app.api.ws import current_state, manager
+from app.core.config import settings
 from app.ingest import suricata, zeek
 from app.schemas.api import IngestBatchRequest, IngestRequest, IngestResponse
 from app.services import repository
 
-router = APIRouter()
+
+def require_ingest_auth(
+    authorization: Annotated[str | None, Header()] = None,
+) -> None:
+    token = settings.ingest_token
+    if not token:
+        # Startup guard refuses this unless demo/explicit unauthenticated mode is enabled.
+        return
+
+    if authorization is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Missing Authorization header; expected 'Bearer <INGEST_TOKEN>'.",
+        )
+
+    scheme, _, credential = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not credential:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Authorization header; expected 'Bearer <INGEST_TOKEN>'.",
+        )
+
+    if not hmac.compare_digest(credential, token):
+        raise HTTPException(status_code=401, detail="Invalid ingest token.")
+
+
+router = APIRouter(dependencies=[Depends(require_ingest_auth)])
 
 #: ``source`` -> adapter. Adapters are pure ``raw_text -> list[SecurityEvent]`` functions.
 ADAPTERS: dict[str, Callable[[str], list[dict[str, Any]]]] = {

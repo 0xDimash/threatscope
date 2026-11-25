@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -10,9 +11,27 @@ from app.api import assets, demo, events, health, ingest, state, ws
 from app.core.config import settings
 from app.core.db import init_db
 
+logger = logging.getLogger(__name__)
+
+
+def _require_ingest_auth_config() -> None:
+    if settings.ingest_token:
+        return
+    if settings.demo_feed or settings.allow_unauthenticated_ingest:
+        logger.warning(
+            "INGEST_TOKEN is unset; ingest endpoints are unauthenticated because %s is enabled.",
+            "DEMO_FEED" if settings.demo_feed else "ALLOW_UNAUTHENTICATED_INGEST",
+        )
+        return
+    raise RuntimeError(
+        "INGEST_TOKEN is required. Set INGEST_TOKEN, or for local demo only set "
+        "DEMO_FEED=1 or ALLOW_UNAUTHENTICATED_INGEST=1."
+    )
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    _require_ingest_auth_config()
     init_db()
     yield
 
