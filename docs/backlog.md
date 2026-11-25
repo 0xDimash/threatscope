@@ -1,8 +1,7 @@
 # Backlog — current sprint
 
-Six issues, one per lane slot. Copy each into GitHub Issues (or create them from the prefilled
-links) and assign the owner. A task is done when CI is green and it
-runs from `main`.
+One section per sprint, one task per lane slot. Copy each into GitHub Issues and assign the
+owner. A task is done when CI is green and it runs from `main`.
 
 Reference: [`parallel-work.md`](parallel-work.md) for the seams,
 [`api-contract.md`](api-contract.md) for the shapes,
@@ -30,104 +29,116 @@ table (empty until the risk engine writes to it). Phase 1 is closed; phase 2/3 w
 
 ---
 
-## Sprint 2
+## Sprint 2 — shipped (updated 2026-11-25)
 
-### 1. Suricata `eve.json` parser *(carried over from sprint 1)*
+The product moved from the city model to the **room** scene in #16; the city scene is kept as
+`frontend/src/scene/city.legacy.ts` and is no longer mounted. Sprint 2 frontend work landed in
+the room.
 
-**Owner:** Threat intel · **Zone:** `backend/app/ingest`, `backend/tests`, `docs/threat-model.md`
-· **Depends on:** nothing · **Branch:** `feat/ingest-suricata`
+| Task | Lane | PR |
+|---|---|---|
+| 1. Suricata `eve.json` parser + adapter registration | Threat intel | #21, #28 |
+| 2. Asset mapping — IP/host → `asset_id` | Threat intel | #29 |
+| 3. Risk engine → `risk_snapshots` + `risk` frames | Threat intel | #30 |
+| — Kill-chain progress derived from event types | Threat intel | #31 |
+| 4. Frontend REST + WS client (`frontend/src/data`) | Platform | #19 |
+| 5. Attack arcs — room (`viz/roomArcs.ts`), live from the socket | Design | #18, #23 |
+| 6. HUD — event feed, threat banner, kill chain, severity filter, detail card | Design | #20, #23 |
+| — Mobile / vertical HUD layout + screenshots | Design | #23, #27 |
+| — Live per-asset risk in the detail card | Design | #24, #32 |
+| — Simulator targets the shared inventory | Threat intel | #25 |
+| — Demo threat-rate control in the room HUD | Design | #33 |
+| — Room devices mapped to inventory assets (`scene/roomMap.ts`) | Design | #35 |
+| — Custom spaces: create, build from scratch, edit (localStorage only) | Design | #37, #38, #39 |
+| — Electron desktop build (moved to its own repo) | Platform | #34, reverted in #36 |
 
-- [x] pure function `raw -> list[SecurityEvent]`, same pattern as `zeek.py`
-- [x] register in the `ADAPTERS` dict in `backend/app/api/ingest.py`
-- [x] signature → `type`/`severity`/MITRE mapping documented in `docs/threat-model.md`
-- [x] fixture under `backend/tests/fixtures/suricata/`
-- [x] tests mirroring `test_ingest_zeek.py`
-- [x] malformed/partial lines are skipped, never raise
+Arcs are **monochrome**: severity is carried by line width, opacity, dash pattern and packet
+size instead of colour (`STYLES` in `viz/roomArcs.ts`). Unknown `severity` falls back to the
+`info` style.
 
-**Done when:** ~15 tests green and `POST /api/ingest {"source":"suricata"}` accepts a real
-`eve.json` chunk without changes elsewhere.
+Not done from sprint 2 — carried into sprint 3:
 
-### 2. Asset mapping — IP/host → `asset_id`
+- [ ] **Unmapped destinations (task 5).** An event whose `dst.asset_id` is not in the room is
+  hashed onto a stable device, so the arc lands on a device that was not attacked. That
+  contradicts the "never a guessed asset" rule. Decision still to make and record.
+- [ ] **60 fps with arcs (task 5).** Measured for the city scene (`docs/scene.md`), not for the
+  room under `make simulate` load.
+- [ ] **Asset fields in the detail card (task 6).** It shows id + RiskState only; name, kind,
+  criticality, district, ip and tags are missing.
+- [ ] **Event row shows host/ip, not the asset name (task 6).**
+- [ ] **"Narrate in <30 s" check (task 6)** — not run with a non-team member yet.
 
-**Owner:** Threat intel · **Zone:** `backend/app/services`, `docs/threat-model.md`
-· **Depends on:** nothing · **Branch:** `feat/services-asset-mapping`
+---
 
-Adapters currently leave `src.asset_id` / `dst.asset_id` as `null`; the frontend cannot draw
-arcs to an asset until the repository maps them.
+## Sprint 3
 
-- [x] `services/mapping.py`: lookup of `ip` / `host` against the `assets` table
-- [x] applied in `repository.add_events` before insert (single place, adapters stay pure)
-- [x] unknown IPs stay `null` — never a guessed asset
-- [x] tests: known IP mapped, unknown IP stays `null`
-- [x] note in `docs/threat-model.md` on how assets register their addresses
+### 1. Persistent spaces — `spaces` resource
 
-**Done when:** ingested Zeek events land with a real `dst.asset_id`. Consumed by the frontend
-(arcs), risk engine (per-asset scoring) and the events API filter (`?asset_id=`).
+**Owner:** Platform (Threat intel for per-device scoring) · **Zone:** `backend/app/models`,
+`backend/app/schemas`, `backend/app/api`, `backend/app/services`, `backend/tests`,
+`docs/api-contract.md` · **Depends on:** nothing · **Branch:** `feat/api-spaces`
 
-### 3. Risk engine → `risk_snapshots` + `risk` frames
+Full spec: [`tasks/backend-spaces.md`](tasks/backend-spaces.md).
 
-**Owner:** Threat intel · **Zone:** `backend/app/services`, `docs/threat-model.md`
-· **Depends on:** #2 · **Branch:** `feat/services-risk-engine`
+**Done when:** a space created in one browser opens in another, and its bound devices show
+real risk.
 
-- [x] scoring pass over recent events: `risk_delta` × criticality decay into `risk_snapshots`
-- [x] `state` 0..1 → `ok | elevated | critical | compromised` per contract
-- [x] `GET /api/assets/{id}/risk` reads the latest snapshot (shape unchanged)
-- [x] `GET /api/state`: `threat_level` derived from scores, not worst-severity-in-window
-- [x] WS broadcasts a `risk` frame after each scoring pass
-- [x] scoring parameters documented in `docs/threat-model.md` (thesis material)
+### 2. Spaces on the backend — frontend
 
-**Done when:** hammering one asset with ingests raises its risk visibly in `/api/state` and
-the `risk` frame — without any API shape change.
+**Owner:** Design · **Zone:** `frontend/src/ui`, `frontend/src/scene` (client calls in
+`frontend/src/data` with Platform) · **Depends on:** #1 (starts on a mock of the contract)
+· **Branch:** `feat/ui-spaces-api`
 
-### 4. Frontend WS client + live feed wiring
+- [ ] create / edit / delete through `/api/spaces`; `localStorage` kept only as an offline cache
+- [ ] each placed device gets a stable `id` and an optional `asset_id` binding in the builder
+- [ ] `roomMap.ts` hard-coded pairs replaced by the seeded `room` space
+- [ ] unbound devices say so in the detail card instead of `no risk data`
 
-**Owner:** Platform · **Zone:** `frontend/src/data` (Design contributes)
-· **Depends on:** nothing (all backend endpoints exist) · **Branch:** `feat/data-ws-client`
+### 3. Honest arcs for unmapped destinations
 
-- [x] `frontend/src/data/api.ts`: typed REST wrappers for `/api/assets`, `/api/events`,
-  `/api/state`, `/api/assets/{id}/risk`
-- [x] `frontend/src/data/socket.ts`: reconnecting WS client emitting the three frame kinds
-- [x] frames parsed against `frontend/src/types/contract.ts`; unknown `kind` ignored, not thrown
-- [x] `VITE_API_BASE` env switch: mock fixtures vs live backend
-- [x] manual check: two tabs, events from `make simulate` visible in both
+**Owner:** Design · **Zone:** `frontend/src/viz` · **Depends on:** nothing
+· **Branch:** `fix/viz-unmapped-dst`
 
-**Done when:** Design consumes a live feed by importing one module — no `fetch` in `scene/`.
+- [ ] remove the hash fallback in `viz/roomArcs.ts`
+- [ ] unmapped events end at a neutral "unknown target" marker (or are counted, not drawn) —
+  decision recorded in the PR
+- [ ] fps measured in the room under `make simulate`, added to `docs/scene.md`
 
-### 5. Attack arcs — `frontend/src/viz`
+### 4. HUD detail card + event rows use the inventory
 
-**Owner:** Design · **Zone:** `frontend/src/viz` · **Depends on:** #4 (starts on fixtures)
-· **Branch:** `feat/viz-attack-arcs`
+**Owner:** Design · **Zone:** `frontend/src/ui` · **Depends on:** nothing
+· **Branch:** `feat/ui-asset-detail`
 
-- [ ] arc from `src` → `dst.asset_id`, coloured by severity (`scene/palette.ts`)
-- [ ] events without a mapped `dst.asset_id` shown as arcs to the district edge / dropped
-  gracefully — decision recorded in the PR
-- [ ] rise/fade animation, 26 assets + arcs at 60 fps
-- [ ] unknown `severity`/`type` degrade to neutral styling, never throw
-- [ ] driven by `contract-fixtures.ts` until #4 lands, then the socket
-- [ ] screenshot or short recording in the PR
+- [ ] detail card: name, kind, criticality, district, ip, tags (from `/api/assets`) above RiskState
+- [ ] event rows show the asset name when `dst.asset_id` is mapped, host/ip otherwise
+- [ ] missing values render as `—`
+- [ ] narration test with one non-team person, result noted in the PR
 
-**Done when:** the city visibly "lights up" as `make simulate` streams attacks.
+### 5. Replay / time controls
 
-### 6. HUD — event feed, asset panel, filters
+**Owner:** Design (Threat intel for a recorded scenario) · **Zone:** `frontend/src/ui`,
+`frontend/src/viz`, `simulator/` · **Depends on:** nothing (`GET /api/events` already takes
+`from,to`) · **Branch:** `feat/ui-replay`
 
-**Owner:** Design · **Zone:** `frontend/src/ui`, `frontend/src/styles`
-· **Depends on:** #4 · **Branch:** `feat/ui-hud`
+- [ ] pause / play / speed and a scrub bar over a time window
+- [ ] replay re-drives the same arcs and HUD as the live feed
+- [ ] one recorded demo scenario that plays the same way every time (defence safety net)
 
-- [ ] live event list: severity chip, type, `dst` asset, time (ISO → local)
-- [ ] click asset → detail panel (name, kind, criticality, district, ip, tags, RiskState)
-- [ ] threat-level banner + severity counts from `/api/state`; kill-chain meter
-- [ ] severity filter feeding the client (contract already reserves the `filter` frame for later)
-- [ ] unknown values render as `—`/`other`, never crash
-- [ ] screenshot in the PR
+### 6. Design documentation for the thesis
 
-**Done when:** a non-team member can narrate what is happening from the HUD alone in <30 s.
+**Owner:** Design · **Zone:** `docs/design/` · **Depends on:** nothing
+· **Branch:** `docs/design-system`
+
+- [ ] palette, severity encoding (why monochrome), typography, HUD layout and breakpoints
+- [ ] key decisions with before/after screenshots (reuse `docs/images/ui/`)
+- [ ] figures exportable for the thesis
 
 ---
 
 ## Next after this sprint
 
-Replay/time controls, drill-down timeline, export for thesis figures (Design + Cyber A); auth,
-deployment, hardening (Cyber B). Blocked until #3–#6 exist.
+Drill-down timeline and export for thesis figures (Design + Threat intel); auth, deployment,
+hardening (Platform, below). More parsers — syslog, Windows Event (Threat intel).
 
 ### Cybersecurity B (Platform) — follow-ups
 
