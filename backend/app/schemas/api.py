@@ -58,6 +58,8 @@ def _validate_components(components: list[SpaceComponent]) -> list[SpaceComponen
 class SpaceCreateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    #: Optional so clients can keep a stable id; one is generated when omitted.
+    id: Optional[str] = Field(default=None, max_length=64, pattern=r"^[A-Za-z0-9._-]+$")
     name: str = Field(min_length=2, max_length=40)
     template: SpaceTemplate
     components: list[SpaceComponent] = Field(default_factory=list)

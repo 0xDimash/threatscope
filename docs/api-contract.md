@@ -103,20 +103,21 @@ backend stores it only so layouts are reproducible.
 ## Space
 
 A persistent room layout. The frontend owns coordinates; the backend validates bounds and stores
-what it is sent. `asset_id` has no foreign key: layouts must survive inventory reseeds.
+what it is sent. `asset_id` has no foreign key: a write with an unknown asset is a **422**, but a
+layout survives later inventory reseeds.
 
 ```jsonc
 {
-  "id": "room",                               // slug; "room" is seeded
+  "id": "room",                               // explicit on create, else generated
   "name": "Room",                             // trimmed, 2..40 chars
   "template": "room",                         // known template
-  "components": [
+  "components": [                             // 0..64 entries, unique component ids
     {
-      "id": "c-rack",                         // unique inside the space, stable across edits
-      "kind": "rack",                         // rack | switch | pc | nas | cam | iot
+      "id": "room-rack",                      // stable id from frontend/src/scene/roomMap.ts
+      "kind": "rack",                         // rack | switch | pc | monitor | nas | cam | iot
       "x": -4.0,                              // room metres, -6..6
       "z": -3.0,                              // room metres, -5..5
-      "asset_id": "asset-municipal-dc"        // nullable; missing asset treated as unbound on read
+      "asset_id": "asset-municipal-dc"        // always present; null when unbound
     }
   ],
   "created_at": "2026-01-01T00:00:00.000Z",
@@ -124,32 +125,43 @@ what it is sent. `asset_id` has no foreign key: layouts must survive inventory r
 }
 ```
 
-`GET /api/spaces/{id}/risk` returns per-component risk. Bound assets reuse `repository.get_risk()`;
-unbound or missing assets return null risk fields:
+`POST /api/spaces` accepts an optional explicit `id` so clients can keep their own stable ids
+(409 on duplicate); one is generated when omitted. Unknown spaces are 404 on read/update/delete.
+The built-in `room` is seeded with the eight devices of the current room, with ids, kinds and
+floor positions from `frontend/src/scene/room.ts` and asset bindings from `roomMap.ts`.
+localStorage layouts are **not** migrated in this phase.
+
+`GET /api/spaces/{id}/risk` returns one entry per component, in stored order. Bound assets reuse
+`repository.get_risk()` — no new scoring — and mirror `GET /api/assets/{asset_id}/risk`. An
+unbound component, or one whose asset is no longer in the inventory, returns **null** for all
+three risk fields (never a zero score); the stored `asset_id` is preserved so a stale binding
+remains visible.
 
 ```jsonc
 {
-  "space_id": "room",
+  "id": "room",
   "components": [
     {
-      "id": "c-rack",
+      "id": "room-rack",
       "asset_id": "asset-municipal-dc",
       "risk": 42.5,
       "state": "elevated",
-      "events_24h": 12,
-      "last_event_ts": "2026-11-24T14:01:29.185Z"
+      "events_24h": 12
     },
     {
-      "id": "c-free",
+      "id": "room-cam",
       "asset_id": null,
       "risk": null,
       "state": null,
-      "events_24h": 0,
-      "last_event_ts": null
+      "events_24h": null
     }
   ]
 }
 ```
+
+**Consumers:** the frontend data wrappers (`frontend/src/data/api.ts`) and the room risk overlay
+consume component ids, `asset_id` and the three risk fields; the backend reads `RiskSnapshot`
+through `repository.get_risk()`. Cyber A's scoring does not write spaces.
 
 ## Endpoints (owned by Cyber B)
 
@@ -160,11 +172,11 @@ unbound or missing assets return null risk fields:
 | GET | `/api/assets/{id}/risk` | `RiskState` |
 | GET | `/api/state` | aggregate state |
 | GET | `/api/spaces` | `{ spaces: Space[] }` |
-| POST | `/api/spaces` | create space → `201 Space` |
+| POST | `/api/spaces` | create from `Space` (optional `id`; 409 on duplicate) → `201 Space` |
 | GET | `/api/spaces/{id}` | `Space` or 404 |
-| PUT | `/api/spaces/{id}` | full replace of `name` + `components` → `Space` |
-| DELETE | `/api/spaces/{id}` | `204` |
-| GET | `/api/spaces/{id}/risk` | per-component risk |
+| PUT | `/api/spaces/{id}` | full replace of `name` + `components` → `Space`; 404 |
+| DELETE | `/api/spaces/{id}` | `204`; 404 when unknown |
+| GET | `/api/spaces/{id}/risk` | `SpaceRisk`; 404 when unknown |
 | WS | `/ws/events` | live frames, see below |
 | GET | `/healthz` | `{ "status": "ok" }` |
 
