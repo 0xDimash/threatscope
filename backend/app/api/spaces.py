@@ -61,10 +61,13 @@ def list_spaces(session: SessionDep) -> SpacesResponse:
 @router.post("/spaces", response_model=SpaceContract, status_code=201)
 def create_space(payload: SpaceCreateRequest, session: SessionDep) -> SpaceContract:
     components = [c.model_dump() for c in payload.components]
+    space_id = payload.id or _new_space_id(payload.name)
+    if session.get(Space, space_id) is not None:
+        raise HTTPException(status_code=409, detail=f"space already exists: {space_id}")
     _validate_asset_ids(session, components)
     now = datetime.now(timezone.utc)
     space = Space(
-        id=_new_space_id(payload.name),
+        id=space_id,
         name=payload.name,
         template=payload.template,
         components=components,
@@ -109,44 +112,24 @@ def delete_space(space_id: str, session: SessionDep) -> Response:
 
 @router.get("/spaces/{space_id}/risk", response_model=SpaceRisk)
 def get_space_risk(space_id: str, session: SessionDep) -> SpaceRisk:
+    """Per-component risk, read through ``repository.get_risk`` — no new scoring.
+
+    Unbound components (and components whose asset was removed from the inventory) report
+    null risk/state/events_24h, never a zero score. The stored ``asset_id`` is preserved so a
+    stale binding remains visible.
+    """
     space = _space_or_404(session, space_id)
     components: list[SpaceRiskComponent] = []
     for component in space.components or []:
         asset_id = component.get("asset_id")
-        if not asset_id:
-            components.append(
-                SpaceRiskComponent(
-                    id=component.get("id", ""),
-                    asset_id=None,
-                    risk=None,
-                    state=None,
-                    events_24h=0,
-                    last_event_ts=None,
-                )
-            )
-            continue
-        risk = repository.get_risk(session, asset_id)
-        if risk is None:
-            # Missing asset -> treat as unbound on read.
-            components.append(
-                SpaceRiskComponent(
-                    id=component.get("id", ""),
-                    asset_id=None,
-                    risk=None,
-                    state=None,
-                    events_24h=0,
-                    last_event_ts=None,
-                )
-            )
-            continue
+        risk = repository.get_risk(session, asset_id) if asset_id else None
         components.append(
             SpaceRiskComponent(
-                id=component.get("id", ""),
+                id=component["id"],
                 asset_id=asset_id,
-                risk=risk.get("risk"),
-                state=risk.get("state"),
-                events_24h=risk.get("events_24h", 0),
-                last_event_ts=risk.get("last_event_ts"),
+                risk=None if risk is None else risk.get("risk"),
+                state=None if risk is None else risk.get("state"),
+                events_24h=None if risk is None else risk.get("events_24h"),
             )
         )
-    return SpaceRisk(space_id=space.id, components=components)
+    return SpaceRisk(id=space.id, components=components)

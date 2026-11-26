@@ -86,15 +86,24 @@ def validate_inventory(
 
 ROOM_SPACE_ID = "room"
 
+#: Device ids and floor positions mirror ``frontend/src/scene/room.ts``; the asset bindings
+#: mirror ``frontend/src/scene/roomMap.ts``. Stable ids let the UI match a clicked device to its
+#: component and therefore to its risk without a localStorage migration.
 ROOM_SPACE_COMPONENTS: list[dict[str, Any]] = [
-    {"id": "c-rack", "kind": "rack", "x": -4.0, "z": -3.0, "asset_id": "asset-municipal-dc"},
-    {"id": "c-switch", "kind": "switch", "x": -2.0, "z": -3.0, "asset_id": "asset-egov-gateway"},
-    {"id": "c-pc1", "kind": "pc", "x": 2.0, "z": 2.0, "asset_id": "asset-egov-portal"},
-    {"id": "c-pc2", "kind": "pc", "x": 4.0, "z": 2.0, "asset_id": "asset-akimat-portal"},
-    {"id": "c-monitor", "kind": "pc", "x": 2.0, "z": 0.5, "asset_id": "asset-open-data-portal"},
-    {"id": "c-nas", "kind": "nas", "x": 5.0, "z": -2.0, "asset_id": "asset-citizen-registry-db"},
-    {"id": "c-cam", "kind": "cam", "x": 0.0, "z": -4.5, "asset_id": "asset-cctv-network"},
-    {"id": "c-iot", "kind": "iot", "x": -1.0, "z": 1.0, "asset_id": "asset-transit-onay"},
+    {"id": "room-rack", "kind": "rack", "x": -4.0, "z": -3.0, "asset_id": "asset-municipal-dc"},
+    {"id": "room-switch", "kind": "switch", "x": -4.0, "z": -3.0, "asset_id": "asset-egov-gateway"},
+    {"id": "room-pc1", "kind": "pc", "x": 2.0, "z": 2.0, "asset_id": "asset-egov-portal"},
+    {"id": "room-pc2", "kind": "pc", "x": 2.0, "z": 2.0, "asset_id": "asset-akimat-portal"},
+    {
+        "id": "room-monitor",
+        "kind": "monitor",
+        "x": 2.0,
+        "z": 1.6,
+        "asset_id": "asset-open-data-portal",
+    },
+    {"id": "room-nas", "kind": "nas", "x": 5.0, "z": -2.0, "asset_id": "asset-citizen-registry-db"},
+    {"id": "room-cam", "kind": "cam", "x": 0.0, "z": -4.5, "asset_id": "asset-cctv-network"},
+    {"id": "room-iot", "kind": "iot", "x": -1.0, "z": 1.0, "asset_id": "asset-transit-onay"},
 ]
 
 

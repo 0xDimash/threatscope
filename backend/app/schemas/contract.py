@@ -17,7 +17,7 @@ LinkKind = Literal["network", "dependency", "dataflow"]
 RiskStateName = Literal["ok", "elevated", "critical", "compromised"]
 ThreatLevel = Literal["low", "guarded", "elevated", "high", "severe"]
 SpaceTemplate = Literal["room"]
-SpaceComponentKind = Literal["rack", "switch", "pc", "nas", "cam", "iot"]
+SpaceComponentKind = Literal["rack", "switch", "pc", "monitor", "nas", "cam", "iot"]
 
 #: Canonical severity order, most severe last. Used for counts and threat level.
 SEVERITIES: tuple[str, ...] = ("info", "low", "medium", "high", "critical")
@@ -149,20 +149,21 @@ class Space(BaseModel):
 
 
 class SpaceRiskComponent(BaseModel):
+    """One component's risk. All three risk fields are null when the device is unbound."""
+
     model_config = ConfigDict(extra="forbid")
 
     id: str
     asset_id: Optional[str] = None
     risk: Optional[float] = None
     state: Optional[RiskStateName] = None
-    events_24h: int = 0
-    last_event_ts: Optional[str] = None
+    events_24h: Optional[int] = None
 
 
 class SpaceRisk(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    space_id: str
+    id: str
     components: list[SpaceRiskComponent] = Field(default_factory=list)
 
 

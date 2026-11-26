@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.core.seed import ROOM_SPACE_COMPONENTS, ROOM_SPACE_ID
@@ -190,18 +191,97 @@ def test_risk_null_for_unbound_and_real_for_bound(client: TestClient) -> None:
     risk = client.get(f"/api/spaces/{space_id}/risk")
     assert risk.status_code == 200
     body = risk.json()
-    assert body["space_id"] == space_id
+    assert set(body) == {"id", "components"}
+    assert body["id"] == space_id
     by_id = {c["id"]: c for c in body["components"]}
 
     bound = by_id["c1"]
+    assert set(bound) == {"id", "asset_id", "risk", "state", "events_24h"}
     assert bound["asset_id"] == "asset-municipal-dc"
     assert bound["risk"] is not None
     assert bound["state"] in {"ok", "elevated", "critical", "compromised"}
     assert bound["events_24h"] >= 1
 
+    # Risk is read through the same repository call the asset endpoint uses.
+    asset_risk = client.get("/api/assets/asset-municipal-dc/risk").json()
+    assert bound["risk"] == asset_risk["risk"]
+    assert bound["state"] == asset_risk["state"]
+    assert bound["events_24h"] == asset_risk["events_24h"]
+
     unbound = by_id["c2"]
-    assert unbound["asset_id"] is None
-    assert unbound["risk"] is None
-    assert unbound["state"] is None
-    assert unbound["events_24h"] == 0
-    assert unbound["last_event_ts"] is None
+    assert unbound == {
+        "id": "c2",
+        "asset_id": None,
+        "risk": None,
+        "state": None,
+        "events_24h": None,
+    }
+
+
+def test_seeded_room_uses_the_frontend_device_ids_and_positions(client: TestClient) -> None:
+    body = client.get(f"/api/spaces/{ROOM_SPACE_ID}").json()
+    by_id = {c["id"]: c for c in body["components"]}
+
+    assert set(by_id) == {
+        "room-rack", "room-switch", "room-pc1", "room-pc2",
+        "room-monitor", "room-nas", "room-cam", "room-iot",
+    }
+    assert {c["id"]: c["asset_id"] for c in body["components"]} == {
+        "room-rack": "asset-municipal-dc",
+        "room-switch": "asset-egov-gateway",
+        "room-pc1": "asset-egov-portal",
+        "room-pc2": "asset-akimat-portal",
+        "room-monitor": "asset-open-data-portal",
+        "room-nas": "asset-citizen-registry-db",
+        "room-cam": "asset-cctv-network",
+        "room-iot": "asset-transit-onay",
+    }
+    assert by_id["room-switch"]["x"] == -4.0
+    assert by_id["room-pc2"]["x"] == 2.0
+    assert by_id["room-monitor"]["kind"] == "monitor"
+    assert by_id["room-monitor"]["z"] == 1.6
+
+
+def test_missing_asset_still_returns_null_risk_fields(client: TestClient) -> None:
+    # asset-citizen-registry-db is bound in the room but absent from the test inventory.
+    body = client.get(f"/api/spaces/{ROOM_SPACE_ID}/risk").json()
+    stale = {c["id"]: c for c in body["components"]}["room-nas"]
+
+    assert stale == {
+        "id": "room-nas",
+        "asset_id": "asset-citizen-registry-db",
+        "risk": None,
+        "state": None,
+        "events_24h": None,
+    }
+
+
+def test_explicit_space_id_is_honoured_and_duplicates_are_409(client: TestClient) -> None:
+    created = client.post("/api/spaces", json={**_space_payload(), "id": "lab-1"})
+    assert created.status_code == 201
+    assert created.json()["id"] == "lab-1"
+
+    duplicate = client.post("/api/spaces", json={**_space_payload(), "id": "lab-1"})
+    assert duplicate.status_code == 409
+    assert client.get("/api/spaces/lab-1").json() == created.json()
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        _space_payload(name="x"),
+        _space_payload(name="x" * 41),
+        _space_payload(
+            components=[
+                {"id": f"c{i}", "kind": "pc", "x": 0, "z": 0, "asset_id": None}
+                for i in range(65)
+            ]
+        ),
+    ],
+)
+def test_422_bad_name_or_too_many_components(client: TestClient, payload: dict[str, Any]) -> None:
+    assert client.post("/api/spaces", json=payload).status_code == 422
+
+
+def test_put_unknown_space_is_404(client: TestClient) -> None:
+    assert client.put("/api/spaces/nope", json={"name": "Room"}).status_code == 404
