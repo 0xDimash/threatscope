@@ -16,6 +16,8 @@ AssetKind = Literal["scada", "server", "gateway", "district", "db", "service", "
 LinkKind = Literal["network", "dependency", "dataflow"]
 RiskStateName = Literal["ok", "elevated", "critical", "compromised"]
 ThreatLevel = Literal["low", "guarded", "elevated", "high", "severe"]
+SpaceTemplate = Literal["room"]
+SpaceComponentKind = Literal["rack", "switch", "pc", "nas", "cam", "iot"]
 
 #: Canonical severity order, most severe last. Used for counts and threat level.
 SEVERITIES: tuple[str, ...] = ("info", "low", "medium", "high", "critical")
@@ -125,6 +127,45 @@ class AggregateState(BaseModel):
     top_types: list[TypeCount] = Field(default_factory=list)
 
 
+class SpaceComponent(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(min_length=1, max_length=64)
+    kind: SpaceComponentKind
+    x: float = Field(ge=-6.0, le=6.0)
+    z: float = Field(ge=-5.0, le=5.0)
+    asset_id: Optional[str] = None
+
+
+class Space(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    name: str
+    template: SpaceTemplate
+    components: list[SpaceComponent] = Field(default_factory=list)
+    created_at: str
+    updated_at: str
+
+
+class SpaceRiskComponent(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str
+    asset_id: Optional[str] = None
+    risk: Optional[float] = None
+    state: Optional[RiskStateName] = None
+    events_24h: int = 0
+    last_event_ts: Optional[str] = None
+
+
+class SpaceRisk(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    space_id: str
+    components: list[SpaceRiskComponent] = Field(default_factory=list)
+
+
 __all__ = [
     "AggregateState",
     "Asset",
@@ -141,6 +182,12 @@ __all__ = [
     "SEVERITIES",
     "SecurityEvent",
     "Severity",
+    "Space",
+    "SpaceComponent",
+    "SpaceComponentKind",
+    "SpaceRisk",
+    "SpaceRiskComponent",
+    "SpaceTemplate",
     "ThreatLevel",
     "TypeCount",
 ]

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.schemas.contract import Asset, Link, SecurityEvent
+from app.schemas.contract import Asset, Link, SecurityEvent, Space, SpaceComponent, SpaceTemplate
 
 
 class EventsPage(BaseModel):
@@ -44,11 +44,70 @@ class WsFrame(BaseModel):
     data: Any
 
 
+def _validate_components(components: list[SpaceComponent]) -> list[SpaceComponent]:
+    if len(components) > 64:
+        raise ValueError("components must contain at most 64 items")
+    seen: set[str] = set()
+    for component in components:
+        if component.id in seen:
+            raise ValueError(f"duplicate component id: {component.id}")
+        seen.add(component.id)
+    return components
+
+
+class SpaceCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=2, max_length=40)
+    template: SpaceTemplate
+    components: list[SpaceComponent] = Field(default_factory=list)
+
+    @field_validator("name")
+    @classmethod
+    def _trim_name(cls, value: str) -> str:
+        name = value.strip()
+        if len(name) < 2 or len(name) > 40:
+            raise ValueError("name must be 2..40 characters after trimming")
+        return name
+
+    @field_validator("components")
+    @classmethod
+    def _components(cls, value: list[SpaceComponent]) -> list[SpaceComponent]:
+        return _validate_components(value)
+
+
+class SpaceUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(min_length=2, max_length=40)
+    components: list[SpaceComponent] = Field(default_factory=list)
+
+    @field_validator("name")
+    @classmethod
+    def _trim_name(cls, value: str) -> str:
+        name = value.strip()
+        if len(name) < 2 or len(name) > 40:
+            raise ValueError("name must be 2..40 characters after trimming")
+        return name
+
+    @field_validator("components")
+    @classmethod
+    def _components(cls, value: list[SpaceComponent]) -> list[SpaceComponent]:
+        return _validate_components(value)
+
+
+class SpacesResponse(BaseModel):
+    spaces: list[Space]
+
+
 __all__ = [
     "AssetsResponse",
     "EventsPage",
     "IngestBatchRequest",
     "IngestRequest",
     "IngestResponse",
+    "SpaceCreateRequest",
+    "SpaceUpdateRequest",
+    "SpacesResponse",
     "WsFrame",
 ]

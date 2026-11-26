@@ -1,7 +1,7 @@
 # Data contract
 
 The single source of truth shared by frontend, backend and simulator.
-**Status:** draft v0.1 — owned by Cyber A, path/shape owned by Cyber B, visible-fields owned by
+**Status:** draft v0.2 — owned by Cyber A, path/shape owned by Cyber B, visible-fields owned by
 the design owner. Change via PR, all three approve.
 
 ## SecurityEvent
@@ -100,6 +100,57 @@ backend stores it only so layouts are reproducible.
 }
 ```
 
+## Space
+
+A persistent room layout. The frontend owns coordinates; the backend validates bounds and stores
+what it is sent. `asset_id` has no foreign key: layouts must survive inventory reseeds.
+
+```jsonc
+{
+  "id": "room",                               // slug; "room" is seeded
+  "name": "Room",                             // trimmed, 2..40 chars
+  "template": "room",                         // known template
+  "components": [
+    {
+      "id": "c-rack",                         // unique inside the space, stable across edits
+      "kind": "rack",                         // rack | switch | pc | nas | cam | iot
+      "x": -4.0,                              // room metres, -6..6
+      "z": -3.0,                              // room metres, -5..5
+      "asset_id": "asset-municipal-dc"        // nullable; missing asset treated as unbound on read
+    }
+  ],
+  "created_at": "2026-01-01T00:00:00.000Z",
+  "updated_at": "2026-01-01T00:00:00.000Z"
+}
+```
+
+`GET /api/spaces/{id}/risk` returns per-component risk. Bound assets reuse `repository.get_risk()`;
+unbound or missing assets return null risk fields:
+
+```jsonc
+{
+  "space_id": "room",
+  "components": [
+    {
+      "id": "c-rack",
+      "asset_id": "asset-municipal-dc",
+      "risk": 42.5,
+      "state": "elevated",
+      "events_24h": 12,
+      "last_event_ts": "2026-11-24T14:01:29.185Z"
+    },
+    {
+      "id": "c-free",
+      "asset_id": null,
+      "risk": null,
+      "state": null,
+      "events_24h": 0,
+      "last_event_ts": null
+    }
+  ]
+}
+```
+
 ## Endpoints (owned by Cyber B)
 
 | Method | Path | Purpose |
@@ -108,6 +159,12 @@ backend stores it only so layouts are reproducible.
 | GET | `/api/events` | query: `from,to,severity,type,asset_id,limit,cursor` → `{ events, next_cursor }` |
 | GET | `/api/assets/{id}/risk` | `RiskState` |
 | GET | `/api/state` | aggregate state |
+| GET | `/api/spaces` | `{ spaces: Space[] }` |
+| POST | `/api/spaces` | create space → `201 Space` |
+| GET | `/api/spaces/{id}` | `Space` or 404 |
+| PUT | `/api/spaces/{id}` | full replace of `name` + `components` → `Space` |
+| DELETE | `/api/spaces/{id}` | `204` |
+| GET | `/api/spaces/{id}/risk` | per-component risk |
 | WS | `/ws/events` | live frames, see below |
 | GET | `/healthz` | `{ "status": "ok" }` |
 

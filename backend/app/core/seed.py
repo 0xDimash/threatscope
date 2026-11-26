@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import REPO_ROOT, settings
 from app.core.db import SessionLocal, init_db
-from app.models import Asset, Link
+from app.models import Asset, Link, Space
 from app.schemas.contract import Asset as AssetSchema
 from app.schemas.contract import Link as LinkSchema
 
@@ -84,6 +84,51 @@ def validate_inventory(
     return assets, links
 
 
+ROOM_SPACE_ID = "room"
+
+ROOM_SPACE_COMPONENTS: list[dict[str, Any]] = [
+    {"id": "c-rack", "kind": "rack", "x": -4.0, "z": -3.0, "asset_id": "asset-municipal-dc"},
+    {"id": "c-switch", "kind": "switch", "x": -2.0, "z": -3.0, "asset_id": "asset-egov-gateway"},
+    {"id": "c-pc1", "kind": "pc", "x": 2.0, "z": 2.0, "asset_id": "asset-egov-portal"},
+    {"id": "c-pc2", "kind": "pc", "x": 4.0, "z": 2.0, "asset_id": "asset-akimat-portal"},
+    {"id": "c-monitor", "kind": "pc", "x": 2.0, "z": 0.5, "asset_id": "asset-open-data-portal"},
+    {"id": "c-nas", "kind": "nas", "x": 5.0, "z": -2.0, "asset_id": "asset-citizen-registry-db"},
+    {"id": "c-cam", "kind": "cam", "x": 0.0, "z": -4.5, "asset_id": "asset-cctv-network"},
+    {"id": "c-iot", "kind": "iot", "x": -1.0, "z": 1.0, "asset_id": "asset-transit-onay"},
+]
+
+
+def ensure_seed_spaces(session: Optional[Session] = None) -> None:
+    """Ensure the built-in room space exists.
+
+    Idempotent: creates the seeded space only when it is missing, so user edits to the
+    room survive restarts.
+    """
+
+    def _ensure(db: Session) -> None:
+        existing = db.get(Space, ROOM_SPACE_ID)
+        if existing is not None:
+            return
+        now = "2026-01-01T00:00:00.000Z"
+        db.add(
+            Space(
+                id=ROOM_SPACE_ID,
+                name="Room",
+                template="room",
+                components=[dict(component) for component in ROOM_SPACE_COMPONENTS],
+                created_at=now,
+                updated_at=now,
+            )
+        )
+        db.commit()
+
+    if session is not None:
+        _ensure(session)
+        return
+    with SessionLocal() as db:
+        _ensure(db)
+
+
 def seed_inventory(session: Session, inventory: dict[str, Any]) -> tuple[int, int, int]:
     """Replace assets and links with the inventory contents.
 
@@ -138,6 +183,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         init_db()
         with SessionLocal() as session:
             assets, links, skipped = seed_inventory(session, inventory)
+            ensure_seed_spaces(session)
     except SeedError as exc:
         print(f"seed failed: {exc}", file=sys.stderr)
         return 1

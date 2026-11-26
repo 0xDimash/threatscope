@@ -6,14 +6,16 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import assets, demo, events, health, ingest, state, ws
+from app.api import assets, demo, events, health, ingest, spaces, state, ws
 from app.core.config import settings
 from app.core.db import init_db
+from app.core.seed import ensure_seed_spaces
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     init_db()
+    ensure_seed_spaces()
     yield
 
 
@@ -30,6 +32,7 @@ app.include_router(health.router)
 app.include_router(assets.router, prefix="/api")
 app.include_router(events.router, prefix="/api")
 app.include_router(ingest.router, prefix="/api")
+app.include_router(spaces.router, prefix="/api")
 app.include_router(state.router, prefix="/api")
 if settings.demo_feed:
     app.include_router(demo.router, prefix="/api")
