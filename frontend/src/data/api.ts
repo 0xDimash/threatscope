@@ -45,7 +45,7 @@ export interface EventQuery {
 }
 
 export type SpaceTemplate = 'room';
-export type SpaceComponentKind = 'rack' | 'switch' | 'pc' | 'nas' | 'cam' | 'iot';
+export type SpaceComponentKind = 'rack' | 'switch' | 'pc' | 'monitor' | 'nas' | 'cam' | 'iot';
 
 export interface SpaceComponent {
   id: string;
@@ -69,6 +69,7 @@ export interface SpacesResponse {
 }
 
 export interface SpaceCreateRequest {
+  id?: string;
   name: string;
   template: SpaceTemplate;
   components: SpaceComponent[];
@@ -79,17 +80,17 @@ export interface SpaceUpdateRequest {
   components: SpaceComponent[];
 }
 
+/** Null risk fields mean the device is unbound (or its asset is no longer in the inventory). */
 export interface SpaceRiskComponent {
   id: string;
   asset_id: string | null;
   risk: number | null;
   state: 'ok' | 'elevated' | 'critical' | 'compromised' | null;
-  events_24h: number;
-  last_event_ts: string | null;
+  events_24h: number | null;
 }
 
 export interface SpaceRiskResponse {
-  space_id: string;
+  id: string;
   components: SpaceRiskComponent[];
 }
 
