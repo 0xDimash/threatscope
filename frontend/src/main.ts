@@ -2,7 +2,7 @@ import './styles/scene.css';
 import './styles/menu.css';
 import { createRoomScene, type RoomComponent } from './scene/room';
 import { assetForDevice, deviceForAsset } from './scene/roomMap';
-import { connectFeed, fetchState, fetchAssetRisk, type AggregateState } from './data';
+import { connectFeed, fetchState, fetchAssetRisk, fetchInventory, type AggregateState } from './data';
 import type { CityScene } from './scene/types';
 import type { SecurityEvent } from './types/contract';
 import type { FeedStatus } from './data';
@@ -127,6 +127,8 @@ function openSpace(spaceId: string): void {
 
       // Initial state from the backend.
       fetchState().then((st) => hud.setState(st)).catch(() => {});
+      // Names for the detail card and event rows; the HUD works without it (offline / mock).
+      fetchInventory().then((inv) => hud.setInventory(inv.assets)).catch(() => {});
 
       // Live feed via the real WebSocket client.
       const stopFeed = connectFeed({

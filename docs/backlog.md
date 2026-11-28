@@ -129,9 +129,14 @@ real risk.
 **Owner:** Design · **Zone:** `docs/design/` · **Depends on:** nothing
 · **Branch:** `docs/design-system`
 
-- [ ] palette, severity encoding (why monochrome), typography, HUD layout and breakpoints
-- [ ] key decisions with before/after screenshots (reuse `docs/images/ui/`)
-- [ ] figures exportable for the thesis
+- [x] palette, severity encoding (why monochrome), typography, HUD layout and breakpoints
+- [x] key decisions with before/after screenshots (reuse `docs/images/ui/`)
+- [x] figures exportable for the thesis
+
+Pages: [index](design/README.md) · [palette](design/palette.md) ·
+[severity encoding](design/severity-encoding.md) ·
+[typography and layout](design/typography-and-layout.md) ·
+[decisions](design/decisions.md) · [figures](design/figures.md).
 
 ---
 
