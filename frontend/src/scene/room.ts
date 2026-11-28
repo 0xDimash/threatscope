@@ -25,7 +25,7 @@ import { createRoomArcsLayer } from '../viz/roomArcs';
 import { LabelFactory } from './labels';
 import type { CameraPose, CityScene, SceneStats } from './types';
 import type { SecurityEvent } from '../types/contract';
-import { ROOM_ASSET_MAP } from './roomMap';
+import { roomBindings } from './roomMap';
 
 interface Device {
   id: string;
@@ -34,31 +34,38 @@ interface Device {
   size: { x: number; y: number; z: number };
 }
 
-export type ComponentKind = 'rack' | 'switch' | 'pc' | 'nas' | 'cam' | 'iot';
+export type ComponentKind = 'rack' | 'switch' | 'pc' | 'monitor' | 'nas' | 'cam' | 'iot';
 
-/** One placed component in a custom room layout. */
+/** One placed component in a room layout, in room metres. */
 export interface RoomComponent {
+  /** Stable id; component ids are unique per space. */
+  id: string;
   kind: ComponentKind;
   x: number;
   z: number;
+  /** Inventory binding, or null when the device is not bound to an asset. */
+  asset_id: string | null;
 }
 
 export const COMPONENT_KINDS: Record<ComponentKind, { label: string; size: { x: number; y: number; z: number }; y: number }> = {
   rack: { label: 'Server Rack', size: { x: 1.6, y: 3.2, z: 1.2 }, y: 0 },
   switch: { label: 'Switch', size: { x: 1.6, y: 0.4, z: 1.2 }, y: 0 },
   pc: { label: 'Workstation', size: { x: 1.0, y: 0.6, z: 0.8 }, y: 0 },
+  monitor: { label: 'Monitor', size: { x: 1.6, y: 1.0, z: 0.15 }, y: 0 },
   nas: { label: 'NAS', size: { x: 1.2, y: 0.8, z: 1.0 }, y: 0 },
   cam: { label: 'Camera', size: { x: 0.5, y: 0.5, z: 0.5 }, y: 3.6 },
   iot: { label: 'IoT Hub', size: { x: 0.7, y: 0.4, z: 0.7 }, y: 0 },
 };
 
 function devicesFromLayout(components: RoomComponent[]): Device[] {
-  return components.map((component, index) => {
+  return components.map((component) => {
     const kind = COMPONENT_KINDS[component.kind] ?? COMPONENT_KINDS.pc;
+    // The seeded room keeps rack/switch and the PCs stacked; follow the built-in height by id.
+    const base = DEVICES.find((device) => device.id === component.id);
     return {
-      id: `custom-${index}-${component.kind}`,
-      name: kind.label,
-      pos: { x: component.x, y: kind.y, z: component.z },
+      id: component.id,
+      name: base?.name ?? kind.label,
+      pos: { x: component.x, y: base?.pos.y ?? kind.y, z: component.z },
       size: { ...kind.size },
     };
   });
@@ -346,7 +353,11 @@ export function createRoomScene(canvas: HTMLCanvasElement, options: { bloom?: bo
 
   // Events carry inventory asset ids; give the arc layer the same coordinates under
   // those ids so an arc lands on the device that represents the asset.
-  for (const [deviceId, assetId] of Object.entries(ROOM_ASSET_MAP)) {
+  const layoutBindings = options.layout
+    ? options.layout.map((component) => [component.id, component.asset_id] as const)
+    : roomBindings();
+  for (const [deviceId, assetId] of layoutBindings) {
+    if (!assetId) continue;
     const p = positions.get(deviceId);
     if (p) positions.set(assetId, p);
   }

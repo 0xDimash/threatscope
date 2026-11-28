@@ -1,31 +1,40 @@
 /**
  * Which inventory asset each room device stands for.
  *
- * The room is a stylised office; the inventory is the city. Without this table the arcs
- * hash asset ids onto random boxes and clicking a device shows no risk. One device per
- * asset keeps the mapping stable and explainable ("the rack is the municipal DC").
+ * The bindings come from the seeded `room` space on the backend (`GET /api/spaces`), not from a
+ * table in this file, so a rebind with `PUT /api/spaces/{id}` also moves the arcs and the detail
+ * card. `setRoomSpace` is called before a room scene is built; an empty table is harmless.
  */
-export const ROOM_ASSET_MAP: Record<string, string> = {
-  'room-rack': 'asset-municipal-dc',
-  'room-switch': 'asset-egov-gateway',
-  'room-pc1': 'asset-egov-portal',
-  'room-pc2': 'asset-akimat-portal',
-  'room-monitor': 'asset-open-data-portal',
-  'room-nas': 'asset-citizen-registry-db',
-  'room-cam': 'asset-cctv-network',
-  'room-iot': 'asset-transit-onay',
-};
+interface BoundComponent {
+  id: string;
+  asset_id: string | null;
+}
 
-const BY_ASSET: Record<string, string> = Object.fromEntries(
-  Object.entries(ROOM_ASSET_MAP).map(([device, asset]) => [asset, device]),
-);
+let byDevice = new Map<string, string>();
+let byAsset = new Map<string, string>();
+
+/** Replace the binding tables from the space currently on screen (or clear with null). */
+export function setRoomSpace(space: { components?: BoundComponent[] } | null): void {
+  byDevice = new Map();
+  byAsset = new Map();
+  for (const component of space?.components ?? []) {
+    if (!component.asset_id) continue;
+    byDevice.set(component.id, component.asset_id);
+    if (!byAsset.has(component.asset_id)) byAsset.set(component.asset_id, component.id);
+  }
+}
+
+/** Device id → inventory asset id, for every bound device. */
+export function roomBindings(): Array<[string, string]> {
+  return [...byDevice.entries()];
+}
 
 /** Room device id → inventory asset id. */
 export function assetForDevice(deviceId: string | null): string | null {
-  return deviceId ? ROOM_ASSET_MAP[deviceId] ?? null : null;
+  return deviceId ? byDevice.get(deviceId) ?? null : null;
 }
 
 /** Inventory asset id → room device id (null when the asset has no device). */
 export function deviceForAsset(assetId: string | null): string | null {
-  return assetId ? BY_ASSET[assetId] ?? null : null;
+  return assetId ? byAsset.get(assetId) ?? null : null;
 }

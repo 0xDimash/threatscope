@@ -11,7 +11,7 @@ export interface AggregateState {
 export interface HudApi {
   addEvent(event: SecurityEvent): void;
   setState(state: AggregateState): void;
-  selectAsset(id: string | null, risk?: RiskState | null): void;
+  selectAsset(id: string | null, risk?: RiskState | null, bound?: boolean | null): void;
   updateRisk(assetId: string, risk: RiskState): void;
   /** Asset whose detail card is open, or null. */
   selectedId(): string | null;
@@ -163,40 +163,62 @@ export function createHud(host: HTMLElement): HudApi {
         .map((s) => `<span class="hud-kill" style="opacity:${(kc[s] ?? 0).toFixed(2)}">${s.replace('_', ' ')}</span>`)
         .join('');
     },
-    selectAsset(id: string | null, risk: RiskState | null = null): void {
+    selectAsset(id: string | null, risk: RiskState | null = null, bound: boolean | null = null): void {
       currentId = id;
+      detail.textContent = '';
       if (!id) {
         detail.hidden = true;
-        detail.innerHTML = '';
         return;
       }
       detail.hidden = false;
-      detail.innerHTML = `
-        <div class="hud-detail-head">
-          <strong>${id}</strong>
-          <button type="button" class="hud-detail-close">×</button>
-        </div>
-        <div class="hud-detail-body">
-          ${risk ? `
-            ${risk.risk > 0
-              ? `<div class="hud-detail-row"><span>risk</span><span>${risk.risk.toFixed(1)} / 100</span></div>
-                 <div class="hud-detail-row"><span>state</span><span>${risk.state}</span></div>`
-              : '<div class="hud-detail-row"><span>risk</span><span>score pending</span></div>'}
-            <div class="hud-detail-row"><span>events 24h</span><span>${risk.events_24h}</span></div>
-            <div class="hud-detail-row"><span>top types</span><span>${risk.top_types.join(', ') || '—'}</span></div>
-          ` : '<div class="hud-detail-row"><span>no risk data</span><span>—</span></div>'}
-        </div>
-      `;
-      detail.querySelector<HTMLButtonElement>('.hud-detail-close')?.addEventListener('click', () => {
+
+      const head = document.createElement('div');
+      head.className = 'hud-detail-head';
+      const title = document.createElement('strong');
+      title.textContent = id;
+      const close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'hud-detail-close';
+      close.textContent = '×';
+      close.setAttribute('aria-label', 'Close detail');
+      close.addEventListener('click', () => {
         detail.hidden = true;
+        detail.textContent = '';
         currentId = null;
       });
+      head.append(title, close);
+
+      const body = document.createElement('div');
+      body.className = 'hud-detail-body';
+      const row = (label: string, value: string): void => {
+        const line = document.createElement('div');
+        line.className = 'hud-detail-row';
+        const key = document.createElement('span');
+        key.textContent = label;
+        const val = document.createElement('span');
+        val.textContent = value;
+        line.append(key, val);
+        body.append(line);
+      };
+
+      if (bound === false) {
+        row('asset', 'Not bound to an asset');
+      } else if (risk) {
+        row('risk', risk.risk > 0 ? `${risk.risk.toFixed(1)} / 100` : 'score pending');
+        row('state', risk.state);
+        row('events 24h', String(risk.events_24h));
+        row('top types', risk.top_types.join(', ') || '—');
+      } else {
+        row('risk', 'no risk data');
+      }
+
+      detail.append(head, body);
     },
     updateRisk(assetId: string, risk: RiskState): void {
       if (currentId !== assetId || detail.hidden) {
         return;
       }
-      api.selectAsset(assetId, risk);
+      api.selectAsset(assetId, risk, true);
     },
     selectedId(): string | null {
       return detail.hidden ? null : currentId;
