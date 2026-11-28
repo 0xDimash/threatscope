@@ -38,7 +38,7 @@ Both stylesheets mix short and long hex forms. These are the same colour:
 
 | Value | Role | Where it is used |
 |---|---|---|
-| `#000000` | The void / base surface | `html, body` background, `.hud-filter`, `.hud-toggle`, `.menu-new`, `.menu-row`, `#topbar` gradient endpoint (alpha), modal switch knob (`scene.css` 6, 116, 308, 321, 442, 457; `menu.css` 8, 97, 107, 121, 131, 153, 164, 406) |
+| `#000000` | The void / base surface | `html, body` background, `.hud-filter`, `.hud-toggle`, `.menu-new`, `.menu-row`, modal switch knob (`scene.css` 6, 116, 308, 321, 442, 457; `menu.css` 8, 97, 107, 121, 131, 153, 164, 406) |
 | `#0a0a0a` | Raised surface | `.hud-filter.active` background, `.menu-notice`, `.modal` (`scene.css` 129; `menu.css` 195, 291) |
 | `#050505` | Inset row / button | `.modal-row`, `.export-btn` (`menu.css` 345, 439) |
 | `#151515` | Disabled solid button | `.btn-solid:disabled` background (`menu.css` 696) |
