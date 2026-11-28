@@ -120,9 +120,9 @@ real risk.
 `frontend/src/viz`, `simulator/` · **Depends on:** nothing (`GET /api/events` already takes
 `from,to`) · **Branch:** `feat/ui-replay`
 
-- [ ] pause / play / speed and a scrub bar over a time window
-- [ ] replay re-drives the same arcs and HUD as the live feed
-- [ ] one recorded demo scenario that plays the same way every time (defence safety net)
+- [x] pause / play / speed and a scrub bar over a time window
+- [x] replay re-drives the same arcs and HUD as the live feed
+- [x] one recorded demo scenario that plays the same way every time (defence safety net)
 
 ### 6. Design documentation for the thesis
 
