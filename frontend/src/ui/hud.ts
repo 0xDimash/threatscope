@@ -1,4 +1,5 @@
-import type { RiskState, SecurityEvent, Severity } from '../types/contract';
+import type { Asset, RiskState, SecurityEvent, Severity } from '../types/contract';
+import { MISSING, assetFields, dstLabel, indexAssets, type AssetIndex } from './assetInfo';
 
 export interface AggregateState {
   threat_level: 'low' | 'guarded' | 'elevated' | 'high' | 'severe';
@@ -13,6 +14,8 @@ export interface HudApi {
   setState(state: AggregateState): void;
   selectAsset(id: string | null, risk?: RiskState | null): void;
   updateRisk(assetId: string, risk: RiskState): void;
+  /** Inventory used to name assets in the detail card and event rows. Safe to call with `[]`. */
+  setInventory(assets: readonly Asset[] | null | undefined): void;
   /** Asset whose detail card is open, or null. */
   selectedId(): string | null;
   dispose(): void;
@@ -101,6 +104,8 @@ export function createHud(host: HTMLElement): HudApi {
   }
 
   const events: SecurityEvent[] = [];
+  let inventory: AssetIndex = indexAssets([]);
+  let lastRisk: RiskState | null = null;
   function renderEvent(ev: SecurityEvent): HTMLElement {
     const row = document.createElement('button');
     row.className = `hud-event hud-sev-${ev.severity}`;
@@ -117,7 +122,7 @@ export function createHud(host: HTMLElement): HudApi {
     const assetEl = row.querySelector<HTMLElement>('.hud-event-asset')!;
     const timeEl = row.querySelector<HTMLElement>('.hud-event-time')!;
     typeEl.textContent = ev.type;
-    assetEl.textContent = ev.dst.host ?? ev.dst.ip ?? '—';
+    assetEl.textContent = dstLabel(ev.dst, inventory);
     timeEl.textContent = timeLabel(ev.ts);
     row.addEventListener('click', () => {
       if (ev.dst.asset_id) {
@@ -131,6 +136,69 @@ export function createHud(host: HTMLElement): HudApi {
       host.dispatchEvent(new CustomEvent('hud:hover', { detail: null }));
     });
     return row;
+  }
+
+  function detailRow(label: string, value: string | HTMLElement): HTMLElement {
+    const row = document.createElement('div');
+    row.className = 'hud-detail-row';
+    const l = document.createElement('span');
+    l.textContent = label;
+    const v = document.createElement('span');
+    if (typeof value === 'string') v.textContent = value;
+    else v.appendChild(value);
+    row.append(l, v);
+    return row;
+  }
+
+  /** Built with textContent only: inventory strings come from data and must never reach innerHTML. */
+  function renderDetail(id: string, risk: RiskState | null): void {
+    const head = document.createElement('div');
+    head.className = 'hud-detail-head';
+    const title = document.createElement('strong');
+    title.textContent = id;
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'hud-detail-close';
+    close.textContent = '×';
+    close.addEventListener('click', () => {
+      detail.hidden = true;
+      currentId = null;
+    });
+    head.append(title, close);
+
+    const body = document.createElement('div');
+    body.className = 'hud-detail-body';
+    for (const field of assetFields(inventory.get(id))) {
+      if (field.tags && field.tags.length) {
+        const chips = document.createElement('span');
+        chips.className = 'hud-tags';
+        for (const tag of field.tags) {
+          const chip = document.createElement('span');
+          chip.className = 'hud-tag';
+          chip.textContent = tag;
+          chips.appendChild(chip);
+        }
+        body.appendChild(detailRow(field.label, chips));
+      } else {
+        body.appendChild(detailRow(field.label, field.value));
+      }
+    }
+    const divider = document.createElement('div');
+    divider.className = 'hud-detail-divider';
+    body.appendChild(divider);
+    if (risk) {
+      if (risk.risk > 0) {
+        body.appendChild(detailRow('risk', `${risk.risk.toFixed(1)} / 100`));
+        body.appendChild(detailRow('state', risk.state));
+      } else {
+        body.appendChild(detailRow('risk', 'score pending'));
+      }
+      body.appendChild(detailRow('events 24h', String(risk.events_24h)));
+      body.appendChild(detailRow('top types', risk.top_types.join(', ') || MISSING));
+    } else {
+      body.appendChild(detailRow('no risk data', MISSING));
+    }
+    detail.replaceChildren(head, body);
   }
 
   function applyFilter(): void {
@@ -165,32 +233,23 @@ export function createHud(host: HTMLElement): HudApi {
     },
     selectAsset(id: string | null, risk: RiskState | null = null): void {
       currentId = id;
+      lastRisk = risk;
       if (!id) {
         detail.hidden = true;
-        detail.innerHTML = '';
+        detail.replaceChildren();
         return;
       }
       detail.hidden = false;
-      detail.innerHTML = `
-        <div class="hud-detail-head">
-          <strong>${id}</strong>
-          <button type="button" class="hud-detail-close">×</button>
-        </div>
-        <div class="hud-detail-body">
-          ${risk ? `
-            ${risk.risk > 0
-              ? `<div class="hud-detail-row"><span>risk</span><span>${risk.risk.toFixed(1)} / 100</span></div>
-                 <div class="hud-detail-row"><span>state</span><span>${risk.state}</span></div>`
-              : '<div class="hud-detail-row"><span>risk</span><span>score pending</span></div>'}
-            <div class="hud-detail-row"><span>events 24h</span><span>${risk.events_24h}</span></div>
-            <div class="hud-detail-row"><span>top types</span><span>${risk.top_types.join(', ') || '—'}</span></div>
-          ` : '<div class="hud-detail-row"><span>no risk data</span><span>—</span></div>'}
-        </div>
-      `;
-      detail.querySelector<HTMLButtonElement>('.hud-detail-close')?.addEventListener('click', () => {
-        detail.hidden = true;
-        currentId = null;
+      renderDetail(id, risk);
+    },
+    setInventory(assets: readonly Asset[] | null | undefined): void {
+      inventory = indexAssets(assets);
+      eventsEl.querySelectorAll<HTMLElement>('.hud-event').forEach((row, i) => {
+        const ev = events[i];
+        const label = row.querySelector<HTMLElement>('.hud-event-asset');
+        if (ev && label) label.textContent = dstLabel(ev.dst, inventory);
       });
+      if (currentId && !detail.hidden) renderDetail(currentId, lastRisk);
     },
     updateRisk(assetId: string, risk: RiskState): void {
       if (currentId !== assetId || detail.hidden) {
