@@ -1,16 +1,25 @@
 import './styles/scene.css';
 import './styles/menu.css';
 import { createRoomScene, type RoomComponent } from './scene/room';
-import { assetForDevice, deviceForAsset } from './scene/roomMap';
-import { connectFeed, fetchState, fetchAssetRisk, type AggregateState } from './data';
+import { deviceForAsset, setRoomSpace } from './scene/roomMap';
+import {
+  ApiError,
+  connectFeed,
+  fetchAssetRisk,
+  fetchState,
+  getSpaceRisk,
+  type AggregateState,
+  type SpaceRiskComponent,
+} from './data';
 import type { CityScene } from './scene/types';
-import type { SecurityEvent } from './types/contract';
+import type { RiskState, SecurityEvent } from './types/contract';
 import type { FeedStatus } from './data';
 import { createHud, type HudApi } from './ui/hud';
 import { mountFeedControl } from './ui/feedControl';
 import { renderMenu } from './ui/menu';
 import { openSpaceEditor } from './ui/newSpace';
-import { findSpace, type SpaceTemplate } from './ui/spaces';
+import { showNotice } from './ui/notice';
+import { findSpace, loadSpaces, type SpaceDef, type SpaceTemplate } from './ui/spaces';
 import { openSettings, readSetting } from './ui/settings';
 import { createFigureTools } from './ui/figures';
 
@@ -42,6 +51,36 @@ const FACTORIES: Record<SpaceTemplate, SceneFactory> = {
 let active: CityScene | null = null;
 let activeHud: HudApi | null = null;
 let activeSpaceId: string | null = null;
+let activeSpace: SpaceDef | null = null;
+let activeRisk = new Map<string, SpaceRiskComponent>();
+
+/** One component's entry from `/api/spaces/{id}/risk` as the detail card's RiskState. */
+function riskStateFor(entry: SpaceRiskComponent | undefined): RiskState | null {
+  if (!entry || entry.risk === null || entry.state === null || entry.events_24h === null) return null;
+  return {
+    asset_id: entry.asset_id ?? '',
+    risk: entry.risk,
+    state: entry.state,
+    events_24h: entry.events_24h,
+    last_event_ts: null,
+    top_types: [],
+  };
+}
+
+/** The backend is the only source of risk; no locally invented numbers. */
+async function refreshActiveRisk(): Promise<void> {
+  const spaceId = activeSpaceId;
+  if (!spaceId) return;
+  try {
+    const response = await getSpaceRisk(spaceId);
+    if (activeSpaceId !== spaceId) return;
+    activeRisk = new Map(response.components.map((component) => [component.id, component]));
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      showNotice('This space no longer exists on the server. It may have been deleted elsewhere.');
+    }
+  }
+}
 
 // Thesis figure export. Figure mode belongs to the room view and is re-applied whenever a scene is built.
 const figures = createFigureTools({
@@ -64,6 +103,8 @@ function disposeActive(): void {
   activeHud?.dispose();
   activeHud = null;
   activeSpaceId = null;
+  activeSpace = null;
+  activeRisk = new Map();
 }
 
 function showMenu(): void {
@@ -110,10 +151,13 @@ function openSpace(spaceId: string): void {
   menuRoot.hidden = true;
   topbar.hidden = false;
   spaceTitle.textContent = space.title;
+  activeSpace = space;
+  activeSpaceId = spaceId;
+  // Bindings drive both the arcs and the HUD focus; set them before the scene is built.
+  setRoomSpace(space);
   const scene = factory(canvas, { ...settingsOptions(), layout: space.components });
   scene.start();
   active = scene;
-  activeSpaceId = spaceId;
   figures.setFigureMode(figures.isFigureMode());
   (window as Window & { __threatscope?: CityScene }).__threatscope = scene;
 
@@ -127,6 +171,7 @@ function openSpace(spaceId: string): void {
 
       // Initial state from the backend.
       fetchState().then((st) => hud.setState(st)).catch(() => {});
+      void refreshActiveRisk();
 
       // Live feed via the real WebSocket client.
       const stopFeed = connectFeed({
@@ -148,12 +193,21 @@ function openSpace(spaceId: string): void {
       });
       (active as any).__stopFeed = stopFeed;
 
+      // Bound devices read risk from `/api/spaces/{id}/risk`; unbound ones say so.
       hudHost.addEventListener('hud:select', (e: any) => {
-        scene.focusAsset(deviceForAsset(e.detail) ?? e.detail);
-        // The backend is the only source of risk; no locally invented numbers.
-        fetchAssetRisk(e.detail)
-          .then((r) => hud.selectAsset(e.detail, r))
-          .catch(() => hud.selectAsset(e.detail, null));
+        const assetId = e.detail as string;
+        const component = activeSpace?.components?.find((candidate) => candidate.asset_id === assetId);
+        scene.focusAsset(deviceForAsset(assetId) ?? assetId);
+        if (component) {
+          hud.selectAsset(assetId, riskStateFor(activeRisk.get(component.id)), true);
+          void refreshActiveRisk().then(() =>
+            hud.selectAsset(assetId, riskStateFor(activeRisk.get(component.id)), true),
+          );
+          return;
+        }
+        fetchAssetRisk(assetId)
+          .then((risk) => hud.selectAsset(assetId, risk, true))
+          .catch(() => hud.selectAsset(assetId, null, true));
       });
       hudHost.addEventListener('hud:hover', (e: any) => {
         scene.highlight?.(deviceForAsset(e.detail) ?? e.detail);
@@ -181,7 +235,9 @@ function openSettingsModal(): void {
   );
 }
 
-function route(): void {
+async function route(): Promise<void> {
+  // The backend list decides what exists; await it so a space from another browser opens.
+  await loadSpaces();
   const match = /^#\/space\/([\w-]+)$/.exec(window.location.hash);
   if (match) {
     openSpace(match[1]);
@@ -197,16 +253,28 @@ canvas.addEventListener('click', (event: MouseEvent) => {
   if (!active) return;
   const id = active.pick(event.clientX, event.clientY);
   if (!id) return;
-  const assetId = assetForDevice(id) ?? id;
+  const spaceId = activeSpaceId;
+  const component = activeSpace?.components?.find((candidate) => candidate.id === id);
   active.focusAsset(id);
-  activeHud?.selectAsset(assetId, null);
-  fetchAssetRisk(assetId)
-    .then((r) => activeHud?.selectAsset(assetId, r))
-    .catch(() => {});
+  if (!component) {
+    activeHud?.selectAsset(id, null, null);
+    return;
+  }
+  if (component.asset_id === null) {
+    activeHud?.selectAsset(id, null, false);
+    return;
+  }
+  const assetId = component.asset_id;
+  const show = (): void => {
+    if (activeSpaceId !== spaceId) return;
+    activeHud?.selectAsset(assetId, riskStateFor(activeRisk.get(component.id)), true);
+  };
+  show();
+  void refreshActiveRisk().then(show);
 });
 settingsBtn.addEventListener('click', openSettingsModal);
-window.addEventListener('hashchange', route);
-route();
+window.addEventListener('hashchange', () => void route());
+void route();
 
 /** Live snapshot exposed as `window.__threatscopeLive` for manual verification. */
 const live = {

@@ -6,6 +6,7 @@
  * `VITE_API_BASE` overrides the default, which mirrors the page host on port 8000.
  */
 import type { Asset, Link, SecurityEvent, Severity } from '../types/contract';
+import { mockAssets, mockLinks, mockSpaces, mockSpaceRisk } from './mock';
 
 export interface AggregateState {
   threat_level: 'low' | 'guarded' | 'elevated' | 'high' | 'severe';
@@ -114,7 +115,11 @@ export function apiBase(): string {
 
 /** `GET /api/assets` — the seeded inventory the city is built from. */
 export function fetchInventory(signal?: AbortSignal): Promise<Inventory> {
-  return getJson<Inventory>('/api/assets', signal);
+  return withFallback(
+    () => getJson<Inventory>('/api/assets', signal),
+    () => ({ assets: mockAssets, links: mockLinks }),
+    signal,
+  );
 }
 
 /** `GET /api/events` — newest first, cursor paginated. */
@@ -141,14 +146,27 @@ export function fetchAssetRisk(assetId: string, signal?: AbortSignal): Promise<R
   return getJson<RiskState>(`/api/assets/${encodeURIComponent(assetId)}/risk`, signal);
 }
 
-/** `GET /api/spaces` — list persisted room layouts. */
-export function listSpaces(signal?: AbortSignal): Promise<SpacesResponse> {
-  return getJson<SpacesResponse>('/api/spaces', signal);
+/** `GET /api/spaces` — list persisted room layouts. Falls back to the seeded room offline. */
+export function listSpaces(
+  signal?: AbortSignal,
+  options: { fallback?: boolean } = {},
+): Promise<SpacesResponse> {
+  const live = (): Promise<SpacesResponse> => getJson<SpacesResponse>('/api/spaces', signal);
+  if (options.fallback === false) return live();
+  return withFallback(live, () => ({ spaces: mockSpaces }), signal);
 }
 
 /** `GET /api/spaces/{id}` — fetch one space. */
 export function getSpace(spaceId: string, signal?: AbortSignal): Promise<Space> {
-  return getJson<Space>(`/api/spaces/${encodeURIComponent(spaceId)}`, signal);
+  return withFallback(
+    () => getJson<Space>(`/api/spaces/${encodeURIComponent(spaceId)}`, signal),
+    () => {
+      const space = mockSpaces.find((candidate) => candidate.id === spaceId);
+      if (!space) throw new ApiError(404, `space not found in the offline cache: ${spaceId}`);
+      return space;
+    },
+    signal,
+  );
 }
 
 /** `POST /api/spaces` — create a space. */
@@ -177,13 +195,34 @@ export async function deleteSpace(spaceId: string, signal?: AbortSignal): Promis
     headers: { Accept: 'application/json' },
   });
   if (!response.ok) {
-    throw new ApiError(response.status, `DELETE ${path} failed with HTTP ${response.status}`);
+    throw await failure(response, 'DELETE', path);
   }
 }
 
-/** `GET /api/spaces/{id}/risk` — per-component risk for a space. */
+/** `GET /api/spaces/{id}/risk` — per-component risk for a space. Offline: all fields null. */
 export function getSpaceRisk(spaceId: string, signal?: AbortSignal): Promise<SpaceRiskResponse> {
-  return getJson<SpaceRiskResponse>(`/api/spaces/${encodeURIComponent(spaceId)}/risk`, signal);
+  return withFallback(
+    () => getJson<SpaceRiskResponse>(`/api/spaces/${encodeURIComponent(spaceId)}/risk`, signal),
+    () => mockSpaceRisk(spaceId),
+    signal,
+  );
+}
+
+/**
+ * Reads only: on a network failure the mock stands in so the app still opens. Writes never fall
+ * back — a fake `201` would hide data loss; `ui/spaces.ts` keeps those writes in its cache instead.
+ */
+async function withFallback<T>(
+  action: () => Promise<T>,
+  fallback: () => T,
+  signal?: AbortSignal,
+): Promise<T> {
+  try {
+    return await action();
+  } catch (error) {
+    if (signal?.aborted || error instanceof ApiError) throw error;
+    return fallback();
+  }
 }
 
 async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
@@ -192,7 +231,7 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
     headers: { Accept: 'application/json' },
   });
   if (!response.ok) {
-    throw new ApiError(response.status, `GET ${path} failed with HTTP ${response.status}`);
+    throw await failure(response, 'GET', path);
   }
   return (await response.json()) as T;
 }
@@ -213,9 +252,21 @@ async function requestJson<T>(
     body: JSON.stringify(body),
   });
   if (!response.ok) {
-    throw new ApiError(response.status, `${method} ${path} failed with HTTP ${response.status}`);
+    throw await failure(response, method, path);
   }
   return (await response.json()) as T;
+}
+
+/** Keeps the server's `detail` (e.g. `unknown asset_id: …`) in the message shown to the user. */
+async function failure(response: Response, method: string, path: string): Promise<ApiError> {
+  let detail = '';
+  try {
+    const body = (await response.json()) as { detail?: unknown };
+    if (typeof body.detail === 'string') detail = `: ${body.detail}`;
+  } catch {
+    /* non-JSON error body — the status is enough */
+  }
+  return new ApiError(response.status, `${method} ${path} failed with HTTP ${response.status}${detail}`);
 }
 
 function resolveApiBase(): string {

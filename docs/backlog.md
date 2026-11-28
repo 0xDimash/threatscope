@@ -89,10 +89,10 @@ real risk.
 `frontend/src/data` with Platform) · **Depends on:** #1 (starts on a mock of the contract)
 · **Branch:** `feat/ui-spaces-api`
 
-- [ ] create / edit / delete through `/api/spaces`; `localStorage` kept only as an offline cache
-- [ ] each placed device gets a stable `id` and an optional `asset_id` binding in the builder
-- [ ] `roomMap.ts` hard-coded pairs replaced by the seeded `room` space
-- [ ] unbound devices say so in the detail card instead of `no risk data`
+- [x] create / edit / delete through `/api/spaces`; `localStorage` kept only as an offline cache
+- [x] each placed device gets a stable `id` and an optional `asset_id` binding in the builder
+- [x] `roomMap.ts` hard-coded pairs replaced by the seeded `room` space
+- [x] unbound devices say so in the detail card instead of `no risk data`
 
 ### 3. Honest arcs for unmapped destinations
 

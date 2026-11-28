@@ -1,4 +1,5 @@
 import { allSpaces, deleteSpace, type SpaceDef } from './spaces';
+import { showNotice } from './notice';
 
 export interface MenuCallbacks {
   onOpen(spaceId: string): void;
@@ -112,9 +113,12 @@ export function renderMenu(root: HTMLElement, callbacks: MenuCallbacks): void {
         callbacks.onOpen,
         callbacks.onEditSpace,
         (id) => {
-          deleteSpace(id);
-          // re-render so the list and the numbering stay honest
-          renderMenu(root, callbacks);
+          void deleteSpace(id).then((result) => {
+            if (!result.ok) showNotice(result.error ?? 'Could not delete the space.');
+            else if (result.notice) showNotice(result.notice);
+            // re-render so the list and the numbering stay honest
+            renderMenu(root, callbacks);
+          });
         },
       ),
     );
