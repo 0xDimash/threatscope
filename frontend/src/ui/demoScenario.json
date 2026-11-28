@@ -1,0 +1,982 @@
+{
+  "name": "defence-demo",
+  "description": "Municipal intrusion: recon, phishing, C2, lateral movement, exfiltration, ransomware.",
+  "seed": 20260312,
+  "events": [
+    {
+      "id": "demo-0001",
+      "ts": "2026-03-12T09:00:01.000Z",
+      "type": "recon",
+      "severity": "low",
+      "src": {
+        "ip": "203.0.113.51",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.4.21",
+        "host": "egov-portal",
+        "asset_id": "asset-egov-portal"
+      },
+      "description": "recon against egov-portal",
+      "mitre": {
+        "tactic": "reconnaissance",
+        "technique_id": "T1595",
+        "technique": "Active Scanning"
+      },
+      "risk_delta": 1.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0002",
+      "ts": "2026-03-12T09:00:02.500Z",
+      "type": "port_scan",
+      "severity": "low",
+      "src": {
+        "ip": "203.0.113.149",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.4.21",
+        "host": "egov-portal",
+        "asset_id": "asset-egov-portal"
+      },
+      "description": "port_scan against egov-portal",
+      "mitre": {
+        "tactic": "discovery",
+        "technique_id": "T1046",
+        "technique": "Network Service Discovery"
+      },
+      "risk_delta": 1.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0003",
+      "ts": "2026-03-12T09:00:04.000Z",
+      "type": "recon",
+      "severity": "low",
+      "src": {
+        "ip": "203.0.113.6",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.4.24",
+        "host": "open-data-portal",
+        "asset_id": "asset-open-data-portal"
+      },
+      "description": "recon against open-data-portal",
+      "mitre": {
+        "tactic": "reconnaissance",
+        "technique_id": "T1595",
+        "technique": "Active Scanning"
+      },
+      "risk_delta": 1.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0004",
+      "ts": "2026-03-12T09:00:05.500Z",
+      "type": "port_scan",
+      "severity": "low",
+      "src": {
+        "ip": "203.0.113.149",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.0.2",
+        "host": "egov-gateway",
+        "asset_id": "asset-egov-gateway"
+      },
+      "description": "port_scan against egov-gateway",
+      "mitre": {
+        "tactic": "discovery",
+        "technique_id": "T1046",
+        "technique": "Network Service Discovery"
+      },
+      "risk_delta": 1.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0005",
+      "ts": "2026-03-12T09:00:07.000Z",
+      "type": "web_attack",
+      "severity": "medium",
+      "src": {
+        "ip": "203.0.113.6",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.4.24",
+        "host": "open-data-portal",
+        "asset_id": "asset-open-data-portal"
+      },
+      "description": "web_attack against open-data-portal",
+      "mitre": {
+        "tactic": "initial-access",
+        "technique_id": "T1190",
+        "technique": "Exploit Public-Facing Application"
+      },
+      "risk_delta": 3.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0006",
+      "ts": "2026-03-12T09:00:09.000Z",
+      "type": "phishing",
+      "severity": "medium",
+      "src": {
+        "ip": "203.0.113.218",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.4.22",
+        "host": "akimat-portal",
+        "asset_id": "asset-akimat-portal"
+      },
+      "description": "phishing against akimat-portal",
+      "mitre": {
+        "tactic": "initial-access",
+        "technique_id": "T1566",
+        "technique": "Phishing"
+      },
+      "risk_delta": 3.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0007",
+      "ts": "2026-03-12T09:00:10.500Z",
+      "type": "phishing",
+      "severity": "medium",
+      "src": {
+        "ip": "203.0.113.218",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.4.22",
+        "host": "akimat-portal",
+        "asset_id": "asset-akimat-portal"
+      },
+      "description": "phishing against akimat-portal",
+      "mitre": {
+        "tactic": "initial-access",
+        "technique_id": "T1566",
+        "technique": "Phishing"
+      },
+      "risk_delta": 3.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0008",
+      "ts": "2026-03-12T09:00:12.000Z",
+      "type": "phishing",
+      "severity": "medium",
+      "src": {
+        "ip": "203.0.113.149",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.4.21",
+        "host": "egov-portal",
+        "asset_id": "asset-egov-portal"
+      },
+      "description": "phishing against egov-portal",
+      "mitre": {
+        "tactic": "initial-access",
+        "technique_id": "T1566",
+        "technique": "Phishing"
+      },
+      "risk_delta": 3.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0009",
+      "ts": "2026-03-12T09:00:14.000Z",
+      "type": "credential_attack",
+      "severity": "high",
+      "src": {
+        "ip": "203.0.113.149",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.4.22",
+        "host": "akimat-portal",
+        "asset_id": "asset-akimat-portal"
+      },
+      "description": "credential_attack against akimat-portal",
+      "mitre": {
+        "tactic": "credential-access",
+        "technique_id": "T1110",
+        "technique": "Brute Force"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0010",
+      "ts": "2026-03-12T09:00:15.000Z",
+      "type": "credential_attack",
+      "severity": "high",
+      "src": {
+        "ip": "203.0.113.218",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.4.22",
+        "host": "akimat-portal",
+        "asset_id": "asset-akimat-portal"
+      },
+      "description": "credential_attack against akimat-portal",
+      "mitre": {
+        "tactic": "credential-access",
+        "technique_id": "T1110",
+        "technique": "Brute Force"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0011",
+      "ts": "2026-03-12T09:00:16.000Z",
+      "type": "credential_attack",
+      "severity": "high",
+      "src": {
+        "ip": "203.0.113.218",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.4.22",
+        "host": "akimat-portal",
+        "asset_id": "asset-akimat-portal"
+      },
+      "description": "credential_attack against akimat-portal",
+      "mitre": {
+        "tactic": "credential-access",
+        "technique_id": "T1110",
+        "technique": "Brute Force"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0012",
+      "ts": "2026-03-12T09:00:18.000Z",
+      "type": "c2_beacon",
+      "severity": "high",
+      "src": {
+        "ip": "203.0.113.51",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.4.22",
+        "host": "akimat-portal",
+        "asset_id": "asset-akimat-portal"
+      },
+      "description": "c2_beacon against akimat-portal",
+      "mitre": {
+        "tactic": "command-and-control",
+        "technique_id": "T1071",
+        "technique": "Application Layer Protocol"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0013",
+      "ts": "2026-03-12T09:00:20.000Z",
+      "type": "c2_beacon",
+      "severity": "high",
+      "src": {
+        "ip": "203.0.113.6",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.4.22",
+        "host": "akimat-portal",
+        "asset_id": "asset-akimat-portal"
+      },
+      "description": "c2_beacon against akimat-portal",
+      "mitre": {
+        "tactic": "command-and-control",
+        "technique_id": "T1071",
+        "technique": "Application Layer Protocol"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0014",
+      "ts": "2026-03-12T09:00:22.000Z",
+      "type": "c2_beacon",
+      "severity": "high",
+      "src": {
+        "ip": "203.0.113.149",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.4.22",
+        "host": "akimat-portal",
+        "asset_id": "asset-akimat-portal"
+      },
+      "description": "c2_beacon against akimat-portal",
+      "mitre": {
+        "tactic": "command-and-control",
+        "technique_id": "T1071",
+        "technique": "Application Layer Protocol"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0015",
+      "ts": "2026-03-12T09:00:24.000Z",
+      "type": "lateral_movement",
+      "severity": "high",
+      "src": {
+        "ip": "10.10.4.22",
+        "host": "akimat-portal",
+        "asset_id": "asset-akimat-portal"
+      },
+      "dst": {
+        "ip": "10.10.0.2",
+        "host": "egov-gateway",
+        "asset_id": "asset-egov-gateway"
+      },
+      "description": "lateral_movement against egov-gateway",
+      "mitre": {
+        "tactic": "lateral-movement",
+        "technique_id": "T1021",
+        "technique": "Remote Services"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0016",
+      "ts": "2026-03-12T09:00:25.500Z",
+      "type": "lateral_movement",
+      "severity": "high",
+      "src": {
+        "ip": "10.10.4.22",
+        "host": "akimat-portal",
+        "asset_id": "asset-akimat-portal"
+      },
+      "dst": {
+        "ip": "10.10.0.2",
+        "host": "egov-gateway",
+        "asset_id": "asset-egov-gateway"
+      },
+      "description": "lateral_movement against egov-gateway",
+      "mitre": {
+        "tactic": "lateral-movement",
+        "technique_id": "T1021",
+        "technique": "Remote Services"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0017",
+      "ts": "2026-03-12T09:00:27.000Z",
+      "type": "lateral_movement",
+      "severity": "high",
+      "src": {
+        "ip": "10.10.0.2",
+        "host": "egov-gateway",
+        "asset_id": "asset-egov-gateway"
+      },
+      "dst": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "description": "lateral_movement against municipal-dc",
+      "mitre": {
+        "tactic": "lateral-movement",
+        "technique_id": "T1021",
+        "technique": "Remote Services"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0018",
+      "ts": "2026-03-12T09:00:28.500Z",
+      "type": "credential_attack",
+      "severity": "high",
+      "src": {
+        "ip": "10.10.0.2",
+        "host": "egov-gateway",
+        "asset_id": "asset-egov-gateway"
+      },
+      "dst": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "description": "credential_attack against municipal-dc",
+      "mitre": {
+        "tactic": "credential-access",
+        "technique_id": "T1110",
+        "technique": "Brute Force"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0019",
+      "ts": "2026-03-12T09:00:30.000Z",
+      "type": "lateral_movement",
+      "severity": "high",
+      "src": {
+        "ip": "10.10.0.2",
+        "host": "egov-gateway",
+        "asset_id": "asset-egov-gateway"
+      },
+      "dst": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "description": "lateral_movement against municipal-dc",
+      "mitre": {
+        "tactic": "lateral-movement",
+        "technique_id": "T1021",
+        "technique": "Remote Services"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0020",
+      "ts": "2026-03-12T09:00:32.000Z",
+      "type": "lateral_movement",
+      "severity": "high",
+      "src": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "dst": {
+        "ip": "10.10.2.5",
+        "host": "citizen-registry-db",
+        "asset_id": "asset-citizen-registry-db"
+      },
+      "description": "lateral_movement against citizen-registry-db",
+      "mitre": {
+        "tactic": "lateral-movement",
+        "technique_id": "T1021",
+        "technique": "Remote Services"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0021",
+      "ts": "2026-03-12T09:00:33.500Z",
+      "type": "lateral_movement",
+      "severity": "high",
+      "src": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "dst": {
+        "ip": "10.30.0.1",
+        "host": "cctv-network",
+        "asset_id": "asset-cctv-network"
+      },
+      "description": "lateral_movement against cctv-network",
+      "mitre": {
+        "tactic": "lateral-movement",
+        "technique_id": "T1021",
+        "technique": "Remote Services"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0022",
+      "ts": "2026-03-12T09:00:35.000Z",
+      "type": "c2_beacon",
+      "severity": "high",
+      "src": {
+        "ip": "203.0.113.6",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "description": "c2_beacon against municipal-dc",
+      "mitre": {
+        "tactic": "command-and-control",
+        "technique_id": "T1071",
+        "technique": "Application Layer Protocol"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0023",
+      "ts": "2026-03-12T09:00:37.000Z",
+      "type": "data_exfiltration",
+      "severity": "critical",
+      "src": {
+        "ip": "203.0.113.218",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.2.5",
+        "host": "citizen-registry-db",
+        "asset_id": "asset-citizen-registry-db"
+      },
+      "description": "data_exfiltration against citizen-registry-db",
+      "mitre": {
+        "tactic": "exfiltration",
+        "technique_id": "T1041",
+        "technique": "Exfiltration Over C2 Channel"
+      },
+      "risk_delta": 10.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0024",
+      "ts": "2026-03-12T09:00:38.000Z",
+      "type": "data_exfiltration",
+      "severity": "critical",
+      "src": {
+        "ip": "203.0.113.218",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.2.5",
+        "host": "citizen-registry-db",
+        "asset_id": "asset-citizen-registry-db"
+      },
+      "description": "data_exfiltration against citizen-registry-db",
+      "mitre": {
+        "tactic": "exfiltration",
+        "technique_id": "T1041",
+        "technique": "Exfiltration Over C2 Channel"
+      },
+      "risk_delta": 10.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0025",
+      "ts": "2026-03-12T09:00:39.000Z",
+      "type": "data_exfiltration",
+      "severity": "critical",
+      "src": {
+        "ip": "203.0.113.218",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.2.5",
+        "host": "citizen-registry-db",
+        "asset_id": "asset-citizen-registry-db"
+      },
+      "description": "data_exfiltration against citizen-registry-db",
+      "mitre": {
+        "tactic": "exfiltration",
+        "technique_id": "T1041",
+        "technique": "Exfiltration Over C2 Channel"
+      },
+      "risk_delta": 10.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0026",
+      "ts": "2026-03-12T09:00:40.500Z",
+      "type": "data_exfiltration",
+      "severity": "critical",
+      "src": {
+        "ip": "203.0.113.6",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "description": "data_exfiltration against municipal-dc",
+      "mitre": {
+        "tactic": "exfiltration",
+        "technique_id": "T1041",
+        "technique": "Exfiltration Over C2 Channel"
+      },
+      "risk_delta": 10.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0027",
+      "ts": "2026-03-12T09:00:42.000Z",
+      "type": "c2_beacon",
+      "severity": "high",
+      "src": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "dst": {
+        "ip": "10.20.0.8",
+        "host": "transit-onay",
+        "asset_id": "asset-transit-onay"
+      },
+      "description": "c2_beacon against transit-onay",
+      "mitre": {
+        "tactic": "command-and-control",
+        "technique_id": "T1071",
+        "technique": "Application Layer Protocol"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0028",
+      "ts": "2026-03-12T09:00:44.000Z",
+      "type": "ransomware",
+      "severity": "critical",
+      "src": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "dst": {
+        "ip": "10.10.2.5",
+        "host": "citizen-registry-db",
+        "asset_id": "asset-citizen-registry-db"
+      },
+      "description": "ransomware against citizen-registry-db",
+      "mitre": {
+        "tactic": "impact",
+        "technique_id": "T1486",
+        "technique": "Data Encrypted for Impact"
+      },
+      "risk_delta": 10.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0029",
+      "ts": "2026-03-12T09:00:45.000Z",
+      "type": "ransomware",
+      "severity": "critical",
+      "src": {
+        "ip": "203.0.113.218",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "description": "ransomware against municipal-dc",
+      "mitre": {
+        "tactic": "impact",
+        "technique_id": "T1486",
+        "technique": "Data Encrypted for Impact"
+      },
+      "risk_delta": 10.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0030",
+      "ts": "2026-03-12T09:00:46.000Z",
+      "type": "ransomware",
+      "severity": "critical",
+      "src": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "dst": {
+        "ip": "10.10.2.5",
+        "host": "citizen-registry-db",
+        "asset_id": "asset-citizen-registry-db"
+      },
+      "description": "ransomware against citizen-registry-db",
+      "mitre": {
+        "tactic": "impact",
+        "technique_id": "T1486",
+        "technique": "Data Encrypted for Impact"
+      },
+      "risk_delta": 10.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0031",
+      "ts": "2026-03-12T09:00:47.000Z",
+      "type": "ransomware",
+      "severity": "critical",
+      "src": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "dst": {
+        "ip": "10.10.0.2",
+        "host": "egov-gateway",
+        "asset_id": "asset-egov-gateway"
+      },
+      "description": "ransomware against egov-gateway",
+      "mitre": {
+        "tactic": "impact",
+        "technique_id": "T1486",
+        "technique": "Data Encrypted for Impact"
+      },
+      "risk_delta": 10.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0032",
+      "ts": "2026-03-12T09:00:48.000Z",
+      "type": "ransomware",
+      "severity": "critical",
+      "src": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "dst": {
+        "ip": "10.10.4.22",
+        "host": "akimat-portal",
+        "asset_id": "asset-akimat-portal"
+      },
+      "description": "ransomware against akimat-portal",
+      "mitre": {
+        "tactic": "impact",
+        "technique_id": "T1486",
+        "technique": "Data Encrypted for Impact"
+      },
+      "risk_delta": 10.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0033",
+      "ts": "2026-03-12T09:00:49.000Z",
+      "type": "ransomware",
+      "severity": "critical",
+      "src": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "dst": {
+        "ip": "10.10.4.21",
+        "host": "egov-portal",
+        "asset_id": "asset-egov-portal"
+      },
+      "description": "ransomware against egov-portal",
+      "mitre": {
+        "tactic": "impact",
+        "technique_id": "T1486",
+        "technique": "Data Encrypted for Impact"
+      },
+      "risk_delta": 10.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0034",
+      "ts": "2026-03-12T09:00:50.500Z",
+      "type": "ransomware",
+      "severity": "critical",
+      "src": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "dst": {
+        "ip": "10.30.0.1",
+        "host": "cctv-network",
+        "asset_id": "asset-cctv-network"
+      },
+      "description": "ransomware against cctv-network",
+      "mitre": {
+        "tactic": "impact",
+        "technique_id": "T1486",
+        "technique": "Data Encrypted for Impact"
+      },
+      "risk_delta": 10.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0035",
+      "ts": "2026-03-12T09:00:52.000Z",
+      "type": "ransomware",
+      "severity": "critical",
+      "src": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "dst": {
+        "ip": "10.20.0.8",
+        "host": "transit-onay",
+        "asset_id": "asset-transit-onay"
+      },
+      "description": "ransomware against transit-onay",
+      "mitre": {
+        "tactic": "impact",
+        "technique_id": "T1486",
+        "technique": "Data Encrypted for Impact"
+      },
+      "risk_delta": 10.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0036",
+      "ts": "2026-03-12T09:00:54.000Z",
+      "type": "port_scan",
+      "severity": "low",
+      "src": {
+        "ip": "203.0.113.6",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.0.2",
+        "host": "egov-gateway",
+        "asset_id": "asset-egov-gateway"
+      },
+      "description": "port_scan against egov-gateway",
+      "mitre": {
+        "tactic": "discovery",
+        "technique_id": "T1046",
+        "technique": "Network Service Discovery"
+      },
+      "risk_delta": 1.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0037",
+      "ts": "2026-03-12T09:00:56.000Z",
+      "type": "c2_beacon",
+      "severity": "high",
+      "src": {
+        "ip": "203.0.113.218",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.1.10",
+        "host": "municipal-dc",
+        "asset_id": "asset-municipal-dc"
+      },
+      "description": "c2_beacon against municipal-dc",
+      "mitre": {
+        "tactic": "command-and-control",
+        "technique_id": "T1071",
+        "technique": "Application Layer Protocol"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0038",
+      "ts": "2026-03-12T09:00:58.000Z",
+      "type": "recon",
+      "severity": "low",
+      "src": {
+        "ip": "203.0.113.51",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.4.24",
+        "host": "open-data-portal",
+        "asset_id": "asset-open-data-portal"
+      },
+      "description": "recon against open-data-portal",
+      "mitre": {
+        "tactic": "reconnaissance",
+        "technique_id": "T1595",
+        "technique": "Active Scanning"
+      },
+      "risk_delta": 1.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    },
+    {
+      "id": "demo-0039",
+      "ts": "2026-03-12T09:01:00.000Z",
+      "type": "c2_beacon",
+      "severity": "high",
+      "src": {
+        "ip": "203.0.113.149",
+        "host": null,
+        "asset_id": null
+      },
+      "dst": {
+        "ip": "10.10.4.22",
+        "host": "akimat-portal",
+        "asset_id": "asset-akimat-portal"
+      },
+      "description": "c2_beacon against akimat-portal",
+      "mitre": {
+        "tactic": "command-and-control",
+        "technique_id": "T1071",
+        "technique": "Application Layer Protocol"
+      },
+      "risk_delta": 6.0,
+      "raw_source": "demo-scenario",
+      "meta": {}
+    }
+  ]
+}

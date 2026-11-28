@@ -15,15 +15,19 @@ export interface HudApi {
   updateRisk(assetId: string, risk: RiskState): void;
   /** Asset whose detail card is open, or null. */
   selectedId(): string | null;
+  /** Drop every event row (replay seek, live <-> replay switch). Counters are left to `setState`. */
+  reset(): void;
+  /** Clock used for the relative time on rows; null means wall time (live). Replay passes the playhead. */
+  setClock(clock: (() => number) | null): void;
   dispose(): void;
 }
 
 const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low', 'info'];
 
-function timeLabel(ts: string): string {
+function timeLabel(ts: string, now: number): string {
   try {
     const d = new Date(ts);
-    const diff = Math.max(0, (Date.now() - d.getTime()) / 1000);
+    const diff = Math.max(0, (now - d.getTime()) / 1000);
     if (diff < 60) return `${Math.floor(diff)}s ago`;
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -101,6 +105,7 @@ export function createHud(host: HTMLElement): HudApi {
   }
 
   const events: SecurityEvent[] = [];
+  let clock: (() => number) | null = null;
   function renderEvent(ev: SecurityEvent): HTMLElement {
     const row = document.createElement('button');
     row.className = `hud-event hud-sev-${ev.severity}`;
@@ -118,7 +123,7 @@ export function createHud(host: HTMLElement): HudApi {
     const timeEl = row.querySelector<HTMLElement>('.hud-event-time')!;
     typeEl.textContent = ev.type;
     assetEl.textContent = ev.dst.host ?? ev.dst.ip ?? '—';
-    timeEl.textContent = timeLabel(ev.ts);
+    timeEl.textContent = timeLabel(ev.ts, clock ? clock() : Date.now());
     row.addEventListener('click', () => {
       if (ev.dst.asset_id) {
         host.dispatchEvent(new CustomEvent('hud:select', { detail: ev.dst.asset_id }));
@@ -200,6 +205,13 @@ export function createHud(host: HTMLElement): HudApi {
     },
     selectedId(): string | null {
       return detail.hidden ? null : currentId;
+    },
+    reset(): void {
+      events.length = 0;
+      eventsEl.replaceChildren();
+    },
+    setClock(next): void {
+      clock = next;
     },
     dispose(): void {
       banner.remove();

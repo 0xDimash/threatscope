@@ -8,6 +8,8 @@ import type { SecurityEvent } from './types/contract';
 import type { FeedStatus } from './data';
 import { createHud, type HudApi } from './ui/hud';
 import { mountFeedControl } from './ui/feedControl';
+import { mountReplay, type ReplayUi } from './ui/replay';
+import { clearRoomArcs } from './viz/roomArcs';
 import { renderMenu } from './ui/menu';
 import { openSpaceEditor } from './ui/newSpace';
 import { findSpace, type SpaceTemplate } from './ui/spaces';
@@ -42,6 +44,7 @@ const FACTORIES: Record<SpaceTemplate, SceneFactory> = {
 let active: CityScene | null = null;
 let activeHud: HudApi | null = null;
 let activeSpaceId: string | null = null;
+let activeReplay: ReplayUi | null = null;
 
 // Thesis figure export. Figure mode belongs to the room view and is re-applied whenever a scene is built.
 const figures = createFigureTools({
@@ -59,6 +62,8 @@ function settingsOptions(): { bloom: boolean; labels: boolean } {
 function disposeActive(): void {
   if (active && (active as any).__hudTimer) window.clearInterval((active as any).__hudTimer);
   if (active && (active as any).__stopFeed) (active as any).__stopFeed();
+  activeReplay?.dispose();
+  activeReplay = null;
   active?.dispose();
   active = null;
   activeHud?.dispose();
@@ -128,17 +133,38 @@ function openSpace(spaceId: string): void {
       // Initial state from the backend.
       fetchState().then((st) => hud.setState(st)).catch(() => {});
 
+      // One render path for every event, live or replayed. `animate` is false only for the HUD
+      // rows rebuilt after a scrub, which must not draw arcs.
+      const showEvent = (ev: SecurityEvent, animate: boolean): void => {
+        const target = ev.dst.asset_id;
+        if (target) {
+          deviceCounts.set(target, (deviceCounts.get(target) ?? 0) + 1);
+          if (animate) scene.spawnArc?.(ev);
+        }
+        hud.addEvent(ev);
+      };
+
+      // Replay / time controls. While a replay is on, the live feed is ignored.
+      const replayUi = mountReplay(hudHost, {
+        applyEvent: showEvent,
+        applyState: (state) => hud.setState(state),
+        clear(): void {
+          clearRoomArcs();
+          hud.reset();
+        },
+        setClock: (clock) => hud.setClock(clock),
+        restoreLive(): void {
+          fetchState().then((st) => hud.setState(st)).catch(() => {});
+        },
+      });
+      activeReplay = replayUi;
+
       // Live feed via the real WebSocket client.
       const stopFeed = connectFeed({
         onFrame(frame) {
+          if (!replayUi.isLive()) return;
           if (frame.kind === 'event') {
-            const ev = frame.data;
-            const target = ev.dst.asset_id;
-            if (target) {
-              deviceCounts.set(target, (deviceCounts.get(target) ?? 0) + 1);
-              scene.spawnArc?.(ev);
-            }
-            hud.addEvent(ev);
+            showEvent(frame.data, true);
           } else if (frame.kind === 'state') {
             hud.setState(frame.data);
           } else if (frame.kind === 'risk') {
@@ -230,6 +256,7 @@ const stopFeed = connectFeed({
     console.info(`[threatscope] live feed ${status}${detail ? ` (${detail})` : ''}`);
   },
   onFrame(frame): void {
+    if (activeReplay && !activeReplay.isLive()) return;
     if (frame.kind === 'event') {
       live.events += 1;
       live.lastEvent = frame.data;

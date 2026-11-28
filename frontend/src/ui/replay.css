@@ -1,0 +1,163 @@
+/* ---------- replay and time controls (monochrome) ---------- */
+
+.replay {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 16;
+  box-sizing: border-box;
+  width: min(520px, calc(100vw - 440px));
+  min-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid #1a1a1a;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(6px);
+  color: #b0b3b8;
+  font-family: 'SF Mono', Consolas, Menlo, monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  pointer-events: auto;
+}
+
+.replay.is-replay {
+  border-color: #ffffff;
+}
+
+.replay-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.replay-row[hidden],
+.replay-scrub[hidden] {
+  display: none;
+}
+
+.replay button {
+  min-width: 32px;
+  min-height: 28px;
+  padding: 3px 8px;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  background: #000000;
+  color: #b0b3b8;
+  font: inherit;
+  cursor: pointer;
+}
+
+.replay button:hover:not(:disabled) {
+  border-color: #555555;
+  color: #ffffff;
+}
+
+.replay button.active {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #000000;
+}
+
+.replay button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.replay button:focus-visible,
+.replay-scrub:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.replay-badge {
+  margin-left: auto;
+  padding: 3px 8px;
+  border: 1px solid #555555;
+  border-radius: 4px;
+  color: #ffffff;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.replay.is-replay .replay-badge {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #000000;
+}
+
+.replay-label {
+  color: #6b6f76;
+  text-transform: uppercase;
+}
+
+.replay-time {
+  margin-left: auto;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.replay-scrub {
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  accent-color: #ffffff;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.replay-note {
+  min-height: 12px;
+  color: #6b6f76;
+  font-size: 10px;
+}
+
+.replay-note:empty {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .replay {
+    width: min(520px, calc(100vw - 340px));
+    min-width: 330px;
+  }
+}
+
+/* phones: full width above the Events button, wrapping rows, 40px touch targets */
+@media (max-width: 768px) {
+  .replay {
+    left: 12px;
+    right: 12px;
+    bottom: 60px;
+    width: auto;
+    min-width: 0;
+    transform: none;
+    padding: 8px;
+  }
+  .replay-row {
+    flex-wrap: wrap;
+  }
+  .replay button {
+    min-height: 36px;
+    min-width: 38px;
+  }
+  .replay-badge {
+    margin-left: 0;
+  }
+  .replay-time {
+    margin-left: auto;
+  }
+  /* the Events sheet takes this strip while it is open */
+  .hud-panel.open ~ .replay {
+    display: none;
+  }
+}
+
+body.figure-mode .replay {
+  display: none !important;
+}

@@ -20,7 +20,17 @@ export interface RoomArcsLayer {
   resize(width: number, height: number): void;
   /** Colour of arcs and packets (live and future); white on the dark scene, dark on the print variant. */
   setColor(hex: number): void;
+  /** Remove every arc in flight. New spawns are unaffected. */
+  clear(): void;
   dispose(): void;
+}
+
+/** Layers currently alive; lets the UI clear arcs without a handle on the scene internals. */
+const liveLayers = new Set<RoomArcsLayer>();
+
+/** Remove every arc in flight in every room (replay seek, live <-> replay switch). */
+export function clearRoomArcs(): void {
+  for (const layer of liveLayers) layer.clear();
 }
 
 interface ArcStyle {
@@ -171,7 +181,7 @@ export function createRoomArcsLayer(options: {
     }
   }
 
-  function dispose(): void {
+  function clear(): void {
     for (const arc of arcs) {
       group.remove(arc.line, arc.packet);
       arc.geometry.dispose();
@@ -180,10 +190,17 @@ export function createRoomArcsLayer(options: {
       arc.packet.geometry.dispose();
     }
     arcs.length = 0;
+  }
+
+  function dispose(): void {
+    clear();
+    liveLayers.delete(layer);
     scene.remove(group);
   }
 
-  return { group, spawn, update, resize, setColor, dispose };
+  const layer: RoomArcsLayer = { group, spawn, update, resize, setColor, clear, dispose };
+  liveLayers.add(layer);
+  return layer;
 }
 function hashString(value: string): number {
   let hash = 0;
