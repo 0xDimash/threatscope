@@ -4,6 +4,8 @@ import {
   Mesh,
   MeshBasicMaterial,
   QuadraticBezierCurve3,
+  RingGeometry,
+  DoubleSide,
   Vector2,
   Vector3,
   type Scene,
@@ -12,6 +14,7 @@ import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import type { SecurityEvent, Severity } from '../types/contract';
+import { UNKNOWN_TARGET, resolveArc } from './arcEndpoints';
 
 export interface RoomArcsLayer {
   group: Group;
@@ -42,7 +45,7 @@ const STYLES: Record<Severity, ArcStyle> = {
 };
 
 const LIFETIME = 2.6;
-const EXTERNAL_ORIGIN = new Vector3(0, 5.2, -6.0);
+const MARKER_FADE_OUT = 0.6;
 
 interface ActiveArc {
   line: Line2;
@@ -69,29 +72,28 @@ export function createRoomArcsLayer(options: {
   let resolution = { width: options.viewportWidth, height: options.viewportHeight };
   let arcColor = 0xffffff;
 
-  function destinationPosition(event: SecurityEvent): Vector3 | null {
-    const id = event.dst.asset_id;
-    if (id && devicePositions.has(id)) return devicePositions.get(id)!.clone();
-    // Fallback for real backend events whose asset_ids don't match this room:
-    // hash the destination to a stable device so every event still renders.
-    const ids = [...devicePositions.keys()];
-    if (ids.length === 0) return null;
-    const key = id ?? event.dst.ip ?? event.dst.host ?? '';
-    const idx = Math.abs(hashString(key)) % ids.length;
-    const chosen = devicePositions.get(ids[idx]);
-    return chosen ? chosen.clone() : null;
-  }
-
-  function sourcePosition(event: SecurityEvent): Vector3 {
-    const id = event.src.asset_id;
-    if (id && devicePositions.has(id)) return devicePositions.get(id)!.clone();
-    return EXTERNAL_ORIGIN.clone();
-  }
+  // Neutral "unknown target" marker: hollow diamond on the floor, shown only while an arc
+  // with an unmapped destination is in flight. It is not a device and carries no asset.
+  const markerGeometry = new RingGeometry(0.3, 0.4, 4);
+  const markerMaterial = new MeshBasicMaterial({
+    color: arcColor,
+    transparent: true,
+    opacity: 0,
+    side: DoubleSide,
+    depthWrite: false,
+  });
+  const marker = new Mesh(markerGeometry, markerMaterial);
+  marker.name = 'room-arcs-unknown-target';
+  marker.rotation.x = -Math.PI / 2;
+  marker.rotation.z = Math.PI / 4;
+  marker.position.copy(UNKNOWN_TARGET);
+  marker.visible = false;
+  group.add(marker);
+  let markerRemaining = 0; // seconds the marker stays visible
 
   function spawn(event: SecurityEvent): void {
-    const end = destinationPosition(event);
-    if (!end) return;
-    const start = sourcePosition(event);
+    const { start, end, unknownTarget } = resolveArc(event, devicePositions);
+    if (unknownTarget) markerRemaining = LIFETIME;
     const style = STYLES[event.severity] ?? STYLES.info;
 
     const mid = new Vector3().addVectors(start, end).multiplyScalar(0.5);
@@ -133,6 +135,9 @@ export function createRoomArcsLayer(options: {
   }
 
   function update(_elapsed: number, delta: number): void {
+    markerRemaining = Math.max(0, markerRemaining - delta);
+    markerMaterial.opacity = 0.85 * Math.min(1, markerRemaining / MARKER_FADE_OUT);
+    marker.visible = markerRemaining > 0;
     for (let i = arcs.length - 1; i >= 0; i -= 1) {
       const arc = arcs[i];
       arc.age += delta;
@@ -165,6 +170,7 @@ export function createRoomArcsLayer(options: {
 
   function setColor(hex: number): void {
     arcColor = hex;
+    markerMaterial.color.setHex(hex);
     for (const arc of arcs) {
       arc.material.color.setHex(hex);
       (arc.packet.material as MeshBasicMaterial).color.setHex(hex);
@@ -180,16 +186,11 @@ export function createRoomArcsLayer(options: {
       arc.packet.geometry.dispose();
     }
     arcs.length = 0;
+    group.remove(marker);
+    markerGeometry.dispose();
+    markerMaterial.dispose();
     scene.remove(group);
   }
 
   return { group, spawn, update, resize, setColor, dispose };
-}
-function hashString(value: string): number {
-  let hash = 0;
-  for (let i = 0; i < value.length; i += 1) {
-    hash = (hash << 5) - hash + value.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
 }
